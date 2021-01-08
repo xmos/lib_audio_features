@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+tests/bringup_c/CMakeFiles
+tests/bringup_c/bin
+CMakeCache.txt
+cmake_install.cmake
