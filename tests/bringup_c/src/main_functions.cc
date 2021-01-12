@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <iostream>
 #include "tensorflow/lite/micro/examples/micro_speech/main_functions.h"
 
 #include "tensorflow/lite/micro/examples/micro_speech/audio_provider.h"
@@ -141,6 +142,7 @@ void DebugLog(const char* s) { printf("%s", s); }
 
 // The name of this function is important for Arduino compatibility.
 void setup() {
+
   // Set up logging. Google style is to avoid globals or statics because of
   // lifetime uncertainty, but since this has a trivial destructor it's okay.
   // NOLINTNEXTLINE(runtime-global-variables)
@@ -186,6 +188,10 @@ void setup() {
   //     model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
   // interpreter = &static_interpreter;
 
+  tflite::MicroInterpreter my_interpreter(model, micro_op_resolver, tensor_arena, 
+                                     kTensorArenaSize, error_reporter);
+  interpreter = &my_interpreter;
+
   // Allocate memory from the tensor_arena for the model's tensors.
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if (allocate_status != kTfLiteOk) {
@@ -195,6 +201,11 @@ void setup() {
 
   // Get information about the memory area to use for the model's input.
   model_input = interpreter->input(0);
+
+  std::cout <<  model_input->dims->size << ", 2" << std::endl 
+            << model_input->dims->data[0] << ", 1" << std::endl 
+            << model_input->dims->data[1] << ", " << (kFeatureSliceCount * kFeatureSliceSize) << std::endl;
+
   if ((model_input->dims->size != 2) || (model_input->dims->data[0] != 1) ||
       (model_input->dims->data[1] !=
        (kFeatureSliceCount * kFeatureSliceSize)) ||
