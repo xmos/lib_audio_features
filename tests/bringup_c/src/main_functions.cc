@@ -53,32 +53,6 @@ int8_t* model_input_buffer = nullptr;
 // }
 // }
 
-void RespondToCommand(tflite::ErrorReporter* error_reporter,
-                      int32_t current_time, const char* found_command,
-                      uint8_t score, bool is_new_command) {
-  if (is_new_command) {
-    TF_LITE_REPORT_ERROR(error_reporter, "Heard %s (%d) @%dms", found_command,
-                         score, current_time);
-     switch (found_command[0]) {
-         case 'y':
-           // data = 0x0008;
-           break;
-         case 'n':
-           // data = 0x0004;
-           break;
-         case 'u':
-           // data = 0x0002;
-           break;
-         case 's':
-           // data = 0x0001;
-           break;
-         default:
-           // data = 0x0000;
-           break;
-     }
-  }
-}
-
 
 typedef struct microspeech_device {
     // fifo_t* sample_fifo;
@@ -149,73 +123,6 @@ void setup() {
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
 
-  // Map the model into a usable data structure. This doesn't involve any
-  // copying or parsing, it's a very lightweight operation.
-  model = tflite::GetModel(g_model);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Model provided is schema version %d not equal "
-                         "to supported version %d.",
-                         model->version(), TFLITE_SCHEMA_VERSION);
-    return;
-  }
-
-  // Pull in only the operation implementations we need.
-  // This relies on a complete list of all the ops needed by this graph.
-  // An easier approach is to just use the AllOpsResolver, but this will
-  // incur some penalty in code space for op implementations that are not
-  // needed by this graph.
-  //
-  // tflite::AllOpsResolver resolver;
-  // NOLINTNEXTLINE(runtime-global-variables)
-  static tflite::MicroMutableOpResolver<4> micro_op_resolver(error_reporter);
-
-  if (micro_op_resolver.AddDepthwiseConv2D() != kTfLiteOk) {
-    return;
-  }
-  if (micro_op_resolver.AddFullyConnected() != kTfLiteOk) {
-    return;
-  }
-  if (micro_op_resolver.AddSoftmax() != kTfLiteOk) {
-    return;
-  }
-  if (micro_op_resolver.AddReshape() != kTfLiteOk) {
-    return;
-  }
-
-  // // Build an interpreter to run the model with.
-  // static tflite::micro::xcore::XCoreInterpreter static_interpreter(
-  //     model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
-  // interpreter = &static_interpreter;
-
-  tflite::MicroInterpreter my_interpreter(model, micro_op_resolver, tensor_arena, 
-                                     kTensorArenaSize, error_reporter);
-  interpreter = &my_interpreter;
-
-  // Allocate memory from the tensor_arena for the model's tensors.
-  TfLiteStatus allocate_status = interpreter->AllocateTensors();
-  if (allocate_status != kTfLiteOk) {
-    TF_LITE_REPORT_ERROR(error_reporter, "AllocateTensors() failed");
-    return;
-  }
-
-  // Get information about the memory area to use for the model's input.
-  model_input = interpreter->input(0);
-
-  std::cout <<  model_input->dims->size << ", 2" << std::endl 
-            << model_input->dims->data[0] << ", 1" << std::endl 
-            << model_input->dims->data[1] << ", " << (kFeatureSliceCount * kFeatureSliceSize) << std::endl;
-
-  if ((model_input->dims->size != 2) || (model_input->dims->data[0] != 1) ||
-      (model_input->dims->data[1] !=
-       (kFeatureSliceCount * kFeatureSliceSize)) ||
-      (model_input->type != kTfLiteInt8)) {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "Bad input tensor parameters in model");
-    return;
-  }
-  model_input_buffer = model_input->data.int8;
-
   // Prepare to access the audio spectrograms from a microphone or other source
   // that will provide the inputs to the neural network.
   // NOLINTNEXTLINE(runtime-global-variables)
@@ -232,7 +139,7 @@ void loop() {
   // Fetch the spectrogram for the current time.
   // const int32_t current_time = LatestAudioTimestamp();
   const int32_t current_time = 0;
-  int how_many_new_slices = 0;
+  int how_many_new_slices = 1;
   TfLiteStatus feature_status = feature_provider->PopulateFeatureData(
       error_reporter, previous_time, current_time, &how_many_new_slices);
   if (feature_status != kTfLiteOk) {
@@ -251,29 +158,4 @@ void loop() {
     model_input_buffer[i] = feature_buffer[i];
   }
 
-  // Run the model on the spectrogram input and make sure it succeeds.
-  TfLiteStatus invoke_status = interpreter->Invoke();
-  if (invoke_status != kTfLiteOk) {
-    TF_LITE_REPORT_ERROR(error_reporter, "Invoke failed");
-    return;
-  }
-
-  // Obtain a pointer to the output tensor
-  TfLiteTensor* output = interpreter->output(0);
-  // Determine whether a command was recognized based on the output of inference
-  const char* found_command = nullptr;
-  uint8_t score = 0;
-  bool is_new_command = false;
-  TfLiteStatus process_status = recognizer->ProcessLatestResults(
-      output, current_time, &found_command, &score, &is_new_command);
-  if (process_status != kTfLiteOk) {
-    TF_LITE_REPORT_ERROR(error_reporter,
-                         "RecognizeCommands::ProcessLatestResults() failed");
-    return;
-  }
-  // Do something based on the recognized command. The default implementation
-  // just prints to the error console, but you should replace this with your
-  // own function for a real application.
-  RespondToCommand(error_reporter, current_time, found_command, score,
-                   is_new_command);
 }
