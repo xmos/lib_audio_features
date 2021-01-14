@@ -1,7 +1,6 @@
 import speech_commands.input_data as id
 import tensorflow as tf
-
-#sox -V -r 16000 -n -b 16 -c 2 sin.wav synth 30 sin 100 vol -3dB
+import numpy as np
 
 model_settings = {
     "fingerprint_size" : 40,
@@ -15,7 +14,7 @@ model_settings = {
 
 summaries_dir = "."
 
-model_settings["desired_samples"] = 160000
+model_settings["desired_samples"] = 16000 * 10
 
 
 audio_processor = id.AudioProcessor(
@@ -32,8 +31,12 @@ audio_processor = id.AudioProcessor(
 
 sess = tf.compat.v1.InteractiveSession()
 input_wav = "sin.wav"
-results = audio_processor.get_features_for_wav(input_wav, model_settings,
-                                               sess)
+results = audio_processor.get_features_for_wav(input_wav, model_settings, sess)
 features = results[0]
-print(features.shape)
-print(features)
+features = ((features / 26.0) * 256) - 128
+# print(features.shape)
+# print(features)
+# print("Casting now")
+byte_features = features.astype(np.int8)
+# print(byte_features)
+byte_features.tofile("features_py.bin")
