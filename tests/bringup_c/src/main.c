@@ -14,8 +14,8 @@ int main(void){
 
     printf("Setup complete\n");
 
-    loop();
-
-    printf("Loop complete\n");
-
+    while(1){
+        loop();
+        printf("Loop complete\n");
+    }
 }

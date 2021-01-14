@@ -55,3 +55,4 @@ tests/bringup_c/bin
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+*.bin
