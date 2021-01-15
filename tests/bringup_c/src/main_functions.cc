@@ -93,26 +93,15 @@ int32_t LatestAudioTimestamp(void){
   return time_now;
 }
 
-void gen_sine_input(void){
-  for(int i = 0; i < TOTAL_SAMPLES; i++){
-    const double freq_hz = 100;
-    const double amplitude = 10000;
-
-    double x = static_cast<double>(freq_hz) / kAudioSampleFrequency * static_cast<double>(i) * 6.2831853072;
-    int16_t sample = static_cast<int16_t>(amplitude * ::sin(x));
-    g_captured_audio_buffer[i] = sample; 
-  } 
-}
-
 void load_input_pcm(void){
-    input_pcm.open("sin.raw", std::ios::in|std::ios::binary);
+    input_pcm.open("input.raw", std::ios::in|std::ios::binary);
     if (input_pcm.is_open()){
         input_pcm.seekg(0, std::ios::end);
         std::streampos size = input_pcm.tellg();
         assert(size >= sizeof(g_captured_audio_buffer) && "Input file not large enough to fill buffer");
         input_pcm.seekg(0, std::ios::beg);
         input_pcm.read(reinterpret_cast<char*>(g_captured_audio_buffer), sizeof(g_captured_audio_buffer));
-        std::cout << "Reading: " << sizeof(g_captured_audio_buffer) << " bytes from: " << "sin.raw" << std::endl;
+        std::cout << "Reading: " << sizeof(g_captured_audio_buffer) << " bytes from: " << "input.raw" << std::endl;
         input_pcm.close();
     }else{
         assert(0 && "Cannot open input file");
@@ -142,7 +131,8 @@ TfLiteStatus GetAudioSamples(tflite::ErrorReporter* error_reporter,
   *audio_samples_size = kMaxAudioSampleSize;
   *audio_samples = g_audio_output_buffer;
 
-  std::cout << "GetAudioSamples " << start_ms << "ms, " << duration_ms << "ms, " << *audio_samples_size << ", " << *audio_samples << ", " << next_frame_sample << std::endl;
+  // std::cout << "GetAudioSamples " << start_ms << "ms, " << duration_ms << "ms, " 
+  //   << *audio_samples_size << ", " << *audio_samples << ", " << next_frame_sample << std::endl;
 
   return kTfLiteOk;
 }
@@ -166,7 +156,6 @@ void setup() {
 
   previous_time = 0;
 
-  gen_sine_input();
   load_input_pcm();
 
   for(int i = 0; i < 1024; i++){

@@ -16,6 +16,6 @@ int main(void){
 
     while(1){
         loop();
-        printf("Loop complete\n");
+        // printf("Loop complete\n");
     }
 }

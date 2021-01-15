@@ -3,11 +3,11 @@ import tensorflow as tf
 import numpy as np
 
 model_settings = {
-    "fingerprint_size" : 49,
+    "fingerprint_size" : 49, #Doesn't seem to affect generation of micro features
     "fingerprint_width" : 40,
-    "window_size_samples" : 512,
+    "window_size_samples" : 480,
     "window_stride_samples" : 320,
-    "average_window_width": 512,
+    "average_window_width": 512, #Doesn't seem to affect generation of micro features
     "sample_rate" : 16000,
     "preprocess" : 'micro',
 }
@@ -30,13 +30,12 @@ audio_processor = id.AudioProcessor(
     )
 
 sess = tf.compat.v1.InteractiveSession()
-input_wav = "sin.wav"
+input_wav = "input.wav"
 results = audio_processor.get_features_for_wav(input_wav, model_settings, sess)
 features = results[0]
 features = ((features / 26.0) * 256) - 128
 print(features.shape)
-# print(features)
-# print("Casting now")
+features = np.clip(features, -128, 127)
 byte_features = features.astype(np.int8)
 # print(byte_features)
 byte_features.tofile("features_py.bin")
