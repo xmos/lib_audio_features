@@ -56,3 +56,5 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 *.bin
+tests/bringup_py/data
+tests/data

@@ -3,9 +3,9 @@ import tensorflow as tf
 import numpy as np
 
 model_settings = {
-    "fingerprint_size" : 40,
-    "fingerprint_width" : 49,
-    "window_size_samples" : 480,
+    "fingerprint_size" : 49,
+    "fingerprint_width" : 40,
+    "window_size_samples" : 512,
     "window_stride_samples" : 320,
     "average_window_width": 512,
     "sample_rate" : 16000,
@@ -34,7 +34,7 @@ input_wav = "sin.wav"
 results = audio_processor.get_features_for_wav(input_wav, model_settings, sess)
 features = results[0]
 features = ((features / 26.0) * 256) - 128
-# print(features.shape)
+print(features.shape)
 # print(features)
 # print("Casting now")
 byte_features = features.astype(np.int8)

@@ -202,7 +202,7 @@ void loop() {
 
   for( int f = 0; f < kFeatureSliceSize; f++){
     for( int c = 0; c < kFeatureSliceCount; c++){
-      int idx = c * kFeatureSliceSize + kFeatureSliceCount;
+      int idx = c + f * kFeatureSliceCount;
       int8_t feature = static_cast<int8_t>(feature_buffer[idx]);
       // std::cout << static_cast<int32_t>(feature) << ", ";
       features_c << feature;
