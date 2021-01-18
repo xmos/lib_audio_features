@@ -27,12 +27,12 @@ enable_language(CXX C ASM)
 set(APP_NAME app_features)
 project(${APP_NAME} VERSION 0.1.0)
 
-set(INSTALL_DIR "bin")
+set(INSTALL_DIR "${PROJECT_SOURCE_DIR}/bin")
 
 add_executable(${APP_NAME})
 
 set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
-set(TF_PATH ${AIOT_PATH}/tools/ai_tools/third_party/tensorflow)
+set(XS3_MATH_PATH ${AIOT_PATH}/modules/lib_xs3_math/lib_xs3_math)
 
 
 
@@ -43,35 +43,35 @@ set(BUILD_FLAGS
         )
 
 set(APP_SRCS
-        "./src/main.c"
+        ./src/main.c
+        ./src/xs3_fft_lut.c
     )
 
 set(APP_INCLUDES
         "src"
     )
-# file(GLOB_RECURSE KL_SRCS ${TL_PATH}/kernels/*.cc)
 
-set(TF_SRCS
-        ${MF_PATH}/micro_features_generator.cc
-        ${MF_PATH}/micro_model_settings.cc
-        
+file(GLOB_RECURSE XS3_MATH_C_SRCS ${XS3_MATH_PATH}/src/*.c)
+file(GLOB_RECURSE XS3_MATH_S_SRCS ${XS3_MATH_PATH}/src/*.S)
 
-        # ${KL_SRCS}
-    )
+# set(XS3_MATH_SRCS
+#         ${XS3_MATH_PATH}/src/high/xs3_bfp_fft.c
+#         ${XS3_MATH_PATH}/src/low/fft/xs3_fft_dit.c
+#         ${XS3_MATH_PATH}/src/high/xs3_bfp_complex.c
+#         ${XS3_MATH_PATH}/src/low/xs3_add_vect.c
+#     )
 
-
-set(TF_INCLUDES
-        ${TF_PATH}
-    )
 
 target_include_directories(${APP_NAME}
   PRIVATE ${APP_INCLUDES}
-  # PRIVATE ${TF_INCLUDES}
+  PRIVATE ${XS3_MATH_PATH}/api
+  PRIVATE ${XS3_MATH_PATH}/src/arch/xcore
 )
 
 target_sources(${APP_NAME}
     PRIVATE ${APP_SRCS}
-    # PRIVATE ${TF_SRCS}
+    PRIVATE ${XS3_MATH_C_SRCS}
+    PRIVATE ${XS3_MATH_S_SRCS}
 )
 
 target_compile_options(${APP_NAME}  PRIVATE ${BUILD_FLAGS})
