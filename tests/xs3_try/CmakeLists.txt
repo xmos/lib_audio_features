@@ -1,0 +1,81 @@
+cmake_minimum_required(VERSION 3.14)
+
+
+# Change compiler
+set(CMAKE_SYSTEM_NAME XMOS)
+set(CMAKE_C_COMPILER "xcc")
+set(CMAKE_CXX_COMPILER  "xcc")
+set(CMAKE_ASM_COMPILER  "xcc")
+set(CMAKE_AR "xmosar")
+set(CMAKE_C_COMPILER_AR "xmosar")
+set(CMAKE_CXX_COMPILER_AR "xmosar")
+set(CMAKE_ASM_COMPILER_AR "xmosar")
+
+set(CMAKE_C_COMPILER_FORCED TRUE)
+set(CMAKE_CXX_COMPILER_FORCED TRUE)
+set(CMAKE_ASM_COMPILER_FORCED TRUE)
+
+set(CMAKE_C_FLAGS "" CACHE STRING "C Compiler Base Flags" FORCE)
+set(CMAKE_CXX_FLAGS "-std=c++11" CACHE STRING "C++ Compiler Base Flags" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS "" CACHE INTERNAL "" FORCE)
+
+set(CMAKE_CXX_FLAGS_INIT "-std=c++11")
+set(CMAKE_CXX_FLAGS_INIT "-std=c++11")
+
+enable_language(CXX C ASM)
+
+set(APP_NAME app_features)
+project(${APP_NAME} VERSION 0.1.0)
+
+set(INSTALL_DIR "bin")
+
+add_executable(${APP_NAME})
+
+set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
+set(TF_PATH ${AIOT_PATH}/tools/ai_tools/third_party/tensorflow)
+
+
+
+set(BUILD_FLAGS
+        "-Os"
+        "-g"
+        "-target=XCORE-AI-EXPLORER"
+        )
+
+set(APP_SRCS
+        "./src/main.c"
+    )
+
+set(APP_INCLUDES
+        "src"
+    )
+# file(GLOB_RECURSE KL_SRCS ${TL_PATH}/kernels/*.cc)
+
+set(TF_SRCS
+        ${MF_PATH}/micro_features_generator.cc
+        ${MF_PATH}/micro_model_settings.cc
+        
+
+        # ${KL_SRCS}
+    )
+
+
+set(TF_INCLUDES
+        ${TF_PATH}
+    )
+
+target_include_directories(${APP_NAME}
+  PRIVATE ${APP_INCLUDES}
+  # PRIVATE ${TF_INCLUDES}
+)
+
+target_sources(${APP_NAME}
+    PRIVATE ${APP_SRCS}
+    # PRIVATE ${TF_SRCS}
+)
+
+target_compile_options(${APP_NAME}  PRIVATE ${BUILD_FLAGS})
+target_link_options(${APP_NAME} PRIVATE ${BUILD_FLAGS})
+
+install(TARGETS ${APP_NAME} DESTINATION ${INSTALL_DIR})
+

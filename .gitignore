@@ -58,3 +58,6 @@ Makefile
 *.bin
 tests/bringup_py/data
 tests/data
+tests/xs3_try/CMakeFiles/app_features.dir
+tests/xs3_try/CMakeFiles
+CopyOfCMakeCache.txt
