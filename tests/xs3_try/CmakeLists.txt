@@ -21,6 +21,7 @@ set(BUILD_FLAGS
         "-Os"
         "-g"
         "-target=XCORE-AI-EXPLORER"
+        "-D__XS2A__"
         )
 
 set(APP_SRCS
@@ -38,7 +39,15 @@ file(GLOB_RECURSE XS3_MATH_S_SRCS ${XS3_MATH_PATH}/src/*.S)
 
 set(VTB_SRCS
         ${VTB_PATH}/src/bfp/vtb_utilities.xc
+        ${VTB_PATH}/src/bfp/asm/vtb_hypot.S
+        ${VTB_PATH}/src/bfp/asm/vtb_steer.S
     )
+
+set(DSP_SRCS
+        ${DSP_PATH}/src/bfp/dsp_bfp_cls.S
+        ${DSP_PATH}/src/dsp_math.c
+        )
+
 
 
 target_include_directories(${APP_NAME}
@@ -54,6 +63,7 @@ target_sources(${APP_NAME}
     PRIVATE ${XS3_MATH_C_SRCS}
     PRIVATE ${XS3_MATH_S_SRCS}
     PRIVATE ${VTB_SRCS}
+    PRIVATE ${DSP_SRCS}
 )
 
 target_compile_options(${APP_NAME}  PRIVATE ${BUILD_FLAGS})
