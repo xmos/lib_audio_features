@@ -1,28 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
+set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
 
-
-# Change compiler
-set(CMAKE_SYSTEM_NAME XMOS)
-set(CMAKE_C_COMPILER "xcc")
-set(CMAKE_CXX_COMPILER  "xcc")
-set(CMAKE_ASM_COMPILER  "xcc")
-set(CMAKE_AR "xmosar")
-set(CMAKE_C_COMPILER_AR "xmosar")
-set(CMAKE_CXX_COMPILER_AR "xmosar")
-set(CMAKE_ASM_COMPILER_AR "xmosar")
-
-set(CMAKE_C_COMPILER_FORCED TRUE)
-set(CMAKE_CXX_COMPILER_FORCED TRUE)
-set(CMAKE_ASM_COMPILER_FORCED TRUE)
-
-set(CMAKE_C_FLAGS "" CACHE STRING "C Compiler Base Flags" FORCE)
-set(CMAKE_CXX_FLAGS "-std=c++11" CACHE STRING "C++ Compiler Base Flags" FORCE)
-set(CMAKE_EXE_LINKER_FLAGS "" CACHE INTERNAL "" FORCE)
-
-set(CMAKE_CXX_FLAGS_INIT "-std=c++11")
-set(CMAKE_CXX_FLAGS_INIT "-std=c++11")
-
-enable_language(CXX C ASM)
+include("${AIOT_PATH}/tools/cmake_utils/xmos_toolchain.cmake") 
+enable_language(CXX XC C ASM)
 
 set(APP_NAME app_features)
 project(${APP_NAME} VERSION 0.1.0)
@@ -31,8 +11,9 @@ set(INSTALL_DIR "${PROJECT_SOURCE_DIR}/bin")
 
 add_executable(${APP_NAME})
 
-set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
 set(XS3_MATH_PATH ${AIOT_PATH}/modules/lib_xs3_math/lib_xs3_math)
+set(VTB_PATH ${AIOT_PATH}/modules/lib_voice_toolbox/lib_voice_toolbox)
+set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp/lib_dsp)
 
 
 
@@ -54,24 +35,25 @@ set(APP_INCLUDES
 file(GLOB_RECURSE XS3_MATH_C_SRCS ${XS3_MATH_PATH}/src/*.c)
 file(GLOB_RECURSE XS3_MATH_S_SRCS ${XS3_MATH_PATH}/src/*.S)
 
-# set(XS3_MATH_SRCS
-#         ${XS3_MATH_PATH}/src/high/xs3_bfp_fft.c
-#         ${XS3_MATH_PATH}/src/low/fft/xs3_fft_dit.c
-#         ${XS3_MATH_PATH}/src/high/xs3_bfp_complex.c
-#         ${XS3_MATH_PATH}/src/low/xs3_add_vect.c
-#     )
+
+set(VTB_SRCS
+        ${VTB_PATH}/src/bfp/vtb_utilities.xc
+    )
 
 
 target_include_directories(${APP_NAME}
   PRIVATE ${APP_INCLUDES}
   PRIVATE ${XS3_MATH_PATH}/api
   PRIVATE ${XS3_MATH_PATH}/src/arch/xcore
+  PRIVATE ${VTB_PATH}/api
+  PRIVATE ${DSP_PATH}/api
 )
 
 target_sources(${APP_NAME}
     PRIVATE ${APP_SRCS}
     PRIVATE ${XS3_MATH_C_SRCS}
     PRIVATE ${XS3_MATH_S_SRCS}
+    PRIVATE ${VTB_SRCS}
 )
 
 target_compile_options(${APP_NAME}  PRIVATE ${BUILD_FLAGS})
