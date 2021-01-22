@@ -22,19 +22,33 @@ set(BUILD_FLAGS
         "-g"
         "-target=XCORE-AI-EXPLORER"
         "-D__XS2A__"
+        "-report"
         )
 
 set(APP_SRCS
-        ./src/main.c
-        ./src/xs3_fft_lut.c
+        src/main.c
+        # src/xs3_fft_lut.c
+        src/util.xc
     )
 
 set(APP_INCLUDES
         "src"
     )
 
-file(GLOB_RECURSE XS3_MATH_C_SRCS ${XS3_MATH_PATH}/src/*.c)
-file(GLOB_RECURSE XS3_MATH_S_SRCS ${XS3_MATH_PATH}/src/*.S)
+file(GLOB_RECURSE XS3_MATH_VECT_C_SRCS ${XS3_MATH_PATH}/src/vect/*.c)
+file(GLOB_RECURSE XS3_MATH_VECT_S_SRCS ${XS3_MATH_PATH}/src/vect/*.S)
+file(GLOB_RECURSE XS3_MATH_BFP_C_SRCS ${XS3_MATH_PATH}/src/bfp/*.c)
+file(GLOB_RECURSE XS3_MATH_BFP_S_SRCS ${XS3_MATH_PATH}/src/bfp/*.S)
+file(GLOB_RECURSE XS3_MATH_ARCH_C_SRCS ${XS3_MATH_PATH}/src/arch/xcore/*.c)
+file(GLOB_RECURSE XS3_MATH_ARCH_S_SRCS ${XS3_MATH_PATH}/src/arch/xcore/*.S)
+set(XS3_MATH_SRCS
+        ${XS3_MATH_VECT_C_SRCS}
+        ${XS3_MATH_VECT_S_SRCS}
+        ${XS3_MATH_BFP_C_SRCS}
+        ${XS3_MATH_BFP_S_SRCS}
+        ${XS3_MATH_ARCH_C_SRCS}
+        ${XS3_MATH_ARCH_S_SRCS}
+    )
 
 
 set(VTB_SRCS
@@ -46,7 +60,7 @@ set(VTB_SRCS
 set(DSP_SRCS
         ${DSP_PATH}/src/bfp/dsp_bfp_cls.S
         ${DSP_PATH}/src/dsp_math.c
-        )
+    )
 
 
 
@@ -60,8 +74,7 @@ target_include_directories(${APP_NAME}
 
 target_sources(${APP_NAME}
     PRIVATE ${APP_SRCS}
-    PRIVATE ${XS3_MATH_C_SRCS}
-    PRIVATE ${XS3_MATH_S_SRCS}
+    PRIVATE ${XS3_MATH_SRCS}
     PRIVATE ${VTB_SRCS}
     PRIVATE ${DSP_SRCS}
 )
