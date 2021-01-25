@@ -5,6 +5,8 @@
 
 #include "dsp_math.h"
 #include "bfp_math.h"
+#include <math.h>
+
 // I used python gen_fft_table.py --max_fft_log2 9 --dit for xs3_fft_lut.*
 #define FFT_SIZE 64
 unsigned time_start, time_stop;
@@ -65,15 +67,44 @@ void make_hanning(int32_t *window, unsigned size){
 
 void get_noise_array(int32_t *array, unsigned n);
 
+
+void bfp_ln_s32(bfp_s32_t *ln_out, bfp_s32_t *bfp_in, unsigned n){
+    
+    exponent_t exp = bfp_in->exp;
+    headroom_t hr = bfp_in->hr;
+    int32_t* in_data_ptr = bfp_in->data;
+    int32_t* ln_out_data_ptr = ln_out->data;
+
+    //Using ln(m.2^e) = ln(m) + e.ln(2) we can calculate the ln value of q8_24 result = dsp_math_log(uq8_24 in);
+    const double e = 2.718281828459045; //15 decimal places for 64b float
+    const q8_24 e_q8_24 = (q8_24) (e * (1 << 24)) + dsp_math_log(1 << 24);
+    printf("e_q8_24: %d\n", (int)e_q8_24);
+    const q8_24 ln2_q8_24 = dsp_math_log(2* (1 << 24));
+    printf("ln2_q8_24: %d\n", (int)ln2_q8_24);
+    const q8_24 e_ln2_q8_24 = (q8_24)(((int64_t)e_q8_24 * (int64_t)ln2_q8_24) >> 24);
+    printf("e_ln2_q8_24: %d\n", (int)e_ln2_q8_24);
+    const q8_24 e_ln2_q8_24_fd = (q8_24)(log(2.0) * e  * (1 << 24)); 
+    printf("e_ln2_q8_24_fd: %d\n", (int)e_ln2_q8_24_fd);
+
+
+    for(int i=0; i<n; i++){
+
+    }
+
+}
+
 int main(void){
     printf("Hello\n");
-
 
     uq8_24 x = 100 * 1 << 24;
     TIME_START()
     q8_24 result = dsp_math_log(x);
     TIME_STOP("dsp_math_log")
     printf("%f\n", BFP_FLOAT(result, -24));
+
+    printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX));
+    printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX + 1));
+
 
     const unsigned calc_hr = 1; //Bool
 
@@ -159,7 +190,9 @@ int main(void){
 
     // Use `samples` again to use new time domain data. 
 
-
+    bfp_s32_t log_mag;
+    bfp_s32_init(&log_mag, buffer_mulled, 0 /*exp*/, FFT_SIZE/2, calc_hr);
+    bfp_ln_s32(&log_mag, &mag, 10);
 
 
     printf("Fin\n");
