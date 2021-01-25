@@ -67,30 +67,34 @@ void make_hanning(int32_t *window, unsigned size){
 
 void get_noise_array(int32_t *array, unsigned n);
 
-
+//We assume the input is both positive and normalised so that the mantissa as maximum precision
 void bfp_ln_s32(bfp_s32_t *ln_out, bfp_s32_t *bfp_in, unsigned n){
-    
+    const unsigned ln_frac_bits = 24;
+
     exponent_t exp = bfp_in->exp;
     headroom_t hr = bfp_in->hr;
     int32_t* in_data_ptr = bfp_in->data;
     int32_t* ln_out_data_ptr = ln_out->data;
 
-    //Using ln(m.2^e) = ln(m) + e.ln(2) we can calculate the ln value of q8_24 result = dsp_math_log(uq8_24 in);
-    const double e = 2.718281828459045; //15 decimal places for 64b float
-    const q8_24 e_q8_24 = (q8_24) (e * (1 << 24)) + dsp_math_log(1 << 24);
-    printf("e_q8_24: %d\n", (int)e_q8_24);
-    const q8_24 ln2_q8_24 = dsp_math_log(2* (1 << 24));
-    printf("ln2_q8_24: %d\n", (int)ln2_q8_24);
-    const q8_24 e_ln2_q8_24 = (q8_24)(((int64_t)e_q8_24 * (int64_t)ln2_q8_24) >> 24);
-    printf("e_ln2_q8_24: %d\n", (int)e_ln2_q8_24);
-    const q8_24 e_ln2_q8_24_fd = (q8_24)(log(2.0) * e  * (1 << 24)); 
-    printf("e_ln2_q8_24_fd: %d\n", (int)e_ln2_q8_24_fd);
-
-
-    for(int i=0; i<n; i++){
-
+    //Using ln(m.2^exp) = ln(m) + exp.ln(2) we can calculate the ln value of q8_24 result = dsp_math_log(uq8_24 in);
+    printf("normalised exp: %d\n", exp);
+    //Next we need to denormalise the BFP values because the input and output from log is Q24.
+    exp += ln_frac_bits;
+    printf("denormalised exp: %d\n", exp);
+    
+    exponent_t exp_min = (exponent_t)((float)INT_MIN / log(2) / (1 << ln_frac_bits));
+    printf("exp_min: %d\n", (int)exp_min);
+    if(exp < exp_min){
+        printf("WARNING EXP MIN EXCEEDED - NEED TO HANDLE\n");
     }
 
+    const q8_24 log_adder = (q8_24)(((int64_t)exp * (int64_t)(log(2) * (1 << ln_frac_bits))));
+    printf("log_adder: %d\n", (int)log_adder);
+    for(int i=0; i<n; i++){
+        uq8_24 uq8_24_in_data = in_data_ptr[i];
+        ln_out_data_ptr[i] = dsp_math_log(uq8_24_in_data) + log_adder;
+        printf("ln idx %u: %d\n", i, ln_out_data_ptr[i]);
+    }
 }
 
 int main(void){
@@ -103,7 +107,8 @@ int main(void){
     printf("%f\n", BFP_FLOAT(result, -24));
 
     printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX));
-    printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX + 1));
+    //THIS FAILS
+    //printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX + 1));
 
 
     const unsigned calc_hr = 1; //Bool
@@ -117,8 +122,8 @@ int main(void){
     bfp_s32_t hanning_window;
     bfp_s32_init(&hanning_window, hanning_window_data, -31 /*exp*/, FFT_SIZE, calc_hr);
     TIME_STOP("bfp_s32_init")
-    print_int_array(hanning_window_data, 10);
-    print_bfp_array(&hanning_window, 10);
+    print_int_array(hanning_window_data, 4);
+    print_bfp_array(&hanning_window, 4);
 
 
     int32_t windowed_samples_data[FFT_SIZE];
@@ -155,18 +160,18 @@ int main(void){
     TIME_STOP("bfp_s32_scale")
 
 
-    for(int i=0; i<8; i++){
+    for(int i=0; i<4; i++){
         print_bfp(&samples, i);
     }
 
-    for(int i=0; i<8; i++){
+    for(int i=0; i<4; i++){
         print_bfp(&samples_scaled, i);
     }
 
     bfp_s32_mul(&samples_mulled, &samples_scaled, &samples);
 
 
-    for(int i=0; i<8; i++){
+    for(int i=0; i<4; i++){
         print_bfp(&samples_mulled, i);
     }
 
@@ -192,7 +197,9 @@ int main(void){
 
     bfp_s32_t log_mag;
     bfp_s32_init(&log_mag, buffer_mulled, 0 /*exp*/, FFT_SIZE/2, calc_hr);
-    bfp_ln_s32(&log_mag, &mag, 10);
+    bfp_ln_s32(&log_mag, &mag, 4);
+    print_bfp_array(&log_mag, 4);
+
 
 
     printf("Fin\n");
