@@ -1,5 +1,8 @@
 import numpy
 import sys
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 
 def hz2mel(hz):
     """Convert a value in Hertz to Mels
@@ -42,11 +45,42 @@ def get_filterbanks(nfilt=20,nfft=512,samplerate=16000,lowfreq=0,highfreq=None):
             fbank[j,i] = (i - bin[j]) / (bin[j+1]-bin[j])
         for i in range(int(bin[j+1]), int(bin[j+2])):
             fbank[j,i] = (bin[j+2]-i) / (bin[j+2]-bin[j+1])
+
+    # add half of the last filter
+    idx_start = numpy.where(fbank[nfilt - 1] == numpy.max(fbank[nfilt - 1]))[0][0]
+    new_mel_filter = numpy.zeros(nfft // 2 + 1)
+    new_mel_filter[idx_start:] = 1.0 - fbank[nfilt - 1][idx_start:]
+    fbank = numpy.vstack((fbank, new_mel_filter.T))
+
+
+    if False:
+        fig, axes = plt.subplots(1, ncols=1, figsize=[16, 6])
+        fig.canvas.set_window_title("lowfreq = " + str(lowfreq))
+      
+        num_mels = fbank.shape[0]
+        colours = ["r", "b", "g", "orange", "purple"]
+        for idx in range(num_mels):
+            axes.plot(fbank[idx], colours[idx%len(colours)], label=f"MEL {idx}")  # C filterbank
+        # for idx in range(n_filters):  # Python filterbank
+        #     if idx == 0:
+        #         axes.plot(mel_fb_py_scaled[idx], "r--", label="FB_py")
+        #     else:
+        #         axes.plot(mel_fb_py_scaled[idx], "r--")
+
+        axes.set_xlim(0, nfft / 2 + 1)
+        axes.legend(loc="upper right")
+
+        # save to file
+        plt.savefig(("MEL_" + str(lowfreq) + "Hz.png"), dpi=200)
+
+        # close figure
+        plt.close()
+
     return fbank
 
 def apply_full_mel(bins, fbank):
     filtered = numpy.matmul(fbank, bins)
-    print(filtered.shape)
+    # print(filtered.shape)
     return filtered
 
 def generate_compact_mel(fbank):
@@ -63,26 +97,31 @@ def generate_compact_mel(fbank):
     first_bank_argmax = numpy.argmax(fbank[0])
 
     def get_shortended_line(line):
-        first_non_zero_idx = next((i for i, x in enumerate(line) if x), None) 
-        next_zero_idx = next((i for i, x in enumerate(line[first_non_zero_idx:]) if x == 0), None) + first_non_zero_idx
+        first_non_zero_idx = next((i for i, x in enumerate(line) if x), None)
         # print(line)
-        # print(first_non_zero_idx, next_zero_idx)
-        shortended_line = line[first_non_zero_idx - 1:next_zero_idx]
+        next_zero_idx = next((i for i, x in enumerate(line[first_non_zero_idx:]) if x == 0), None)
+        next_zero_idx_or_end = next_zero_idx + first_non_zero_idx if next_zero_idx else len(line)
+        # print(first_non_zero_idx, next_zero_idx_or_end)
+        shortended_line = line[first_non_zero_idx - 1:next_zero_idx_or_end]
+        # print(shortended_line)
         return shortended_line
+
 
     for idx in range(0, num_mels, 2):
         line = fbank[idx].tolist()
-        print(idx)
+        compact_mel.append(get_shortended_line(line))
+    if (num_mels % 2) == 0:
+        line = fbank[num_mels-1].tolist()
         compact_mel.append(get_shortended_line(line))
 
+    # print(len([item for sublist in compact_mel for item in sublist]))
     return compact_mel
     
 
 
-def apply_compact_mel(bins, compact_fbank):
+def apply_compact_mel(bins, compact_fbank, filtered):
     max_mel = 1.0
     num_bins = bins.shape[0]
-    filtered = numpy.zeros(num_bins)
     mel_even_idx = 0
     mel_odd_idx = 1
     mel_even_accum = 0
@@ -93,12 +132,14 @@ def apply_compact_mel(bins, compact_fbank):
     for idx in range(num_bins):
         even_mel = compact_fbank[idx]
         odd_mel = 0.0 if not odd_mel_active_flag else 1.0 - even_mel
-        print(f"idx {idx}, mel_even_idx {mel_even_idx}, mel_odd_idx {mel_odd_idx}, even_mel {even_mel}, odd_mel {odd_mel}")
+
+        # print(f"idx {idx}, mel_even_idx {mel_even_idx}, mel_odd_idx {mel_odd_idx}, even_mel {even_mel}, odd_mel {odd_mel}")
         mel_even_accum += bins[idx] * even_mel
         mel_odd_accum += bins[idx] * odd_mel
 
         if even_mel == 0.0 and idx > 0:
             filtered[mel_even_idx] = mel_even_accum
+            # print("even", mel_even_accum)
             mel_even_accum = 0
             mel_even_idx += 2
 
@@ -106,44 +147,39 @@ def apply_compact_mel(bins, compact_fbank):
             odd_mel_active_flag = True
             if mel_even_idx > 0:
                 filtered[mel_odd_idx] = mel_odd_accum
+                # print("odd", mel_odd_accum)
                 mel_odd_accum = 0
                 mel_odd_idx += 2
+    return filtered
 
-    return numpy.array(filtered[0:49])
 
-
-def main():
-    fft_size = 512
+def test_equivalence(fft_size, nmels):
+    print(f"testing fft_size: {fft_size}, n mels: {nmels}")
     nbins = fft_size // 2 + 1
-    fbank = get_filterbanks(49, fft_size, 16000)
-    numpy.save("mel_filter", fbank)
-    # grr = numpy.load("mel_filter.npy")
-    # print(numpy.array_equal(fbank, grr))
-
-    print(fbank.shape)
-    old_nz = 0
-    for bank in fbank.tolist():
-        num_zeros = 0
-        for value in bank:
-            if value != 0.0:
-                break;
-            num_zeros += 1
-
-        print(num_zeros, num_zeros - old_nz, bank[:40])
-        old_nz = num_zeros
-
     test_bins = numpy.random.uniform(low=-1.0, high=1.0, size=(nbins))
     # test_bins = numpy.ones(nbins)
-
-    print(test_bins.shape)
-    full_filtered = apply_full_mel(test_bins, fbank)
-
+    fbank = get_filterbanks(nmels, fft_size, 16000)
+    fbank_standard = fbank[ :-1]
+    full_filtered = apply_full_mel(test_bins, fbank_standard)
     compact_mel = generate_compact_mel(fbank)
-    compact_filtered = apply_compact_mel(test_bins, compact_mel)
+    compact_filtered = numpy.zeros(nmels)
+    compact_filtered = apply_compact_mel(test_bins, compact_mel, compact_filtered)
+    # print(numpy.isclose(full_filtered, compact_filtered))
+    # print(full_filtered, compact_filtered)
 
-    print(full_filtered[0:10], compact_filtered[0:10])
+    return numpy.allclose(full_filtered, compact_filtered)
 
-    print(numpy.isclose(full_filtered, compact_filtered))
+def main():
+    for fft_size, test_mels in (
+        (64, (5,6,7)),
+        (128, range(5, 13)),
+        (256, range(5, 29)),
+        (512, range(5, 50))
+        ):
+        nbins = fft_size // 2 + 1
+        for nmels in test_mels:
+            assert test_equivalence(fft_size, nmels)
+    print("PASS")
 
 if __name__ == "__main__":
     main()
