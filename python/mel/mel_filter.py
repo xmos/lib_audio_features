@@ -46,7 +46,9 @@ def get_filterbanks(nfilt=20,nfft=512,samplerate=16000,lowfreq=0,highfreq=None):
         for i in range(int(bin[j+1]), int(bin[j+2])):
             fbank[j,i] = (bin[j+2]-i) / (bin[j+2]-bin[j+1])
 
-    # add half of the last filter
+    # add half of the last filter. This is needed because in the compact form, we
+    # only store the even filters. While this is fine for an odd count, for even counts
+    # we need to have the next half even filter from which we calculate the last odd filter
     idx_start = numpy.where(fbank[nfilt - 1] == numpy.max(fbank[nfilt - 1]))[0][0]
     new_mel_filter = numpy.zeros(nfft // 2 + 1)
     new_mel_filter[idx_start:] = 1.0 - fbank[nfilt - 1][idx_start:]
@@ -83,6 +85,17 @@ def apply_full_mel(bins, fbank):
     # print(filtered.shape)
     return filtered
 
+
+def get_shortended_line(line):
+    first_non_zero_idx = next((i for i, x in enumerate(line) if x), None)
+    # print(line)
+    next_zero_idx = next((i for i, x in enumerate(line[first_non_zero_idx:]) if x == 0), None)
+    next_zero_idx_or_end = next_zero_idx + first_non_zero_idx if next_zero_idx else len(line)
+    # print(first_non_zero_idx, next_zero_idx_or_end)
+    shortended_line = line[first_non_zero_idx - 1:next_zero_idx_or_end]
+    # print(shortended_line)
+    return shortended_line, first_non_zero_idx, next_zero_idx_or_end
+
 def generate_compact_mel(fbank):
     
     num_mels = fbank.shape[0]
@@ -93,30 +106,34 @@ def generate_compact_mel(fbank):
     #1) Only two mel filters overlap at any one time. Hence stride 2 through array
     #2) mel filter banks always add up to 1
     #So we only need to store the even MEL filter banks and no trailing zeros!
-
-    first_bank_argmax = numpy.argmax(fbank[0])
-
-    def get_shortended_line(line):
-        first_non_zero_idx = next((i for i, x in enumerate(line) if x), None)
-        # print(line)
-        next_zero_idx = next((i for i, x in enumerate(line[first_non_zero_idx:]) if x == 0), None)
-        next_zero_idx_or_end = next_zero_idx + first_non_zero_idx if next_zero_idx else len(line)
-        # print(first_non_zero_idx, next_zero_idx_or_end)
-        shortended_line = line[first_non_zero_idx - 1:next_zero_idx_or_end]
-        # print(shortended_line)
-        return shortended_line
-
+    #We create the pdd MEL filter from 1 - even
 
     for idx in range(0, num_mels, 2):
         line = fbank[idx].tolist()
-        compact_mel.append(get_shortended_line(line))
+        compact_mel.append(get_shortended_line(line)[0])
     if (num_mels % 2) == 0:
         line = fbank[num_mels-1].tolist()
-        compact_mel.append(get_shortended_line(line))
+        compact_mel.append(get_shortended_line(line)[0])
 
     # print(len([item for sublist in compact_mel for item in sublist]))
     return compact_mel
     
+def generate_compressed_mel(fbank):
+
+    num_mels = fbank.shape[0]
+    num_bins = fbank.shape[1]
+    compressed_mel = []
+
+    #For compressed mels, we exploit the sparsity of the filters for each output mel
+    #We find where the mel filter starts (skip zero elements) and ends (trailing zeros)
+    #and just store the start/finish indicies and the non zero filter elements 
+
+    for idx in range(0, num_mels):
+        line = fbank[idx].tolist()
+        shortended_line, first_non_zero_idx, next_zero_idx_or_end = get_shortended_line(line)
+        compressed_mel.append((shortended_line[1:], first_non_zero_idx, next_zero_idx_or_end))
+
+    return compressed_mel
 
 
 def apply_compact_mel(bins, compact_fbank, filtered):
@@ -153,6 +170,18 @@ def apply_compact_mel(bins, compact_fbank, filtered):
     return filtered
 
 
+def apply_compressed_mel(bins, compressed_fbank):
+    num_mels = len(compressed_fbank)
+    num_bins = bins.shape[0]
+
+    filtered = numpy.zeros(num_mels)
+    for idx in range(num_mels):
+        shortended_line, first_non_zero_idx, next_zero_idx_or_end = compressed_fbank[idx]
+        line_filt = numpy.array(shortended_line)
+        filtered[idx] = numpy.dot(line_filt, bins[first_non_zero_idx:next_zero_idx_or_end])
+
+    return filtered
+
 def test_equivalence(fft_size, nmels):
     print(f"testing fft_size: {fft_size}, n mels: {nmels}")
     nbins = fft_size // 2 + 1
@@ -161,20 +190,38 @@ def test_equivalence(fft_size, nmels):
     fbank = get_filterbanks(nmels, fft_size, 16000)
     fbank_standard = fbank[ :-1]
     full_filtered = apply_full_mel(test_bins, fbank_standard)
+    
     compact_mel = generate_compact_mel(fbank)
     compact_filtered = numpy.zeros(nmels)
     compact_filtered = apply_compact_mel(test_bins, compact_mel, compact_filtered)
+
+    compressed_mel = generate_compressed_mel(fbank_standard)
+    compressed_filtered = apply_compressed_mel(test_bins, compressed_mel)
+
+    def count_compressed_mel_element(compressed_mel):
+        count = 0
+        for filt in compressed_mel:
+            count += len(compressed_mel[0])
+        return count
+
+
+    n_compressed_mel = count_compressed_mel_element(compressed_mel)
+    print(fbank_standard.size, n_compressed_mel)
+
     # print(numpy.isclose(full_filtered, compact_filtered))
     # print(full_filtered, compact_filtered)
+    result1 = numpy.allclose(full_filtered, compact_filtered)
+    result2 = numpy.allclose(full_filtered, compressed_filtered)
 
-    return numpy.allclose(full_filtered, compact_filtered)
+    return result1 and result2
 
 def main():
     for fft_size, test_mels in (
         (64, (5,6,7)),
         (128, range(5, 13)),
         (256, range(5, 29)),
-        (512, range(5, 50))
+        (512, range(5, 57)),
+        (1024, range(10, 60))
         ):
         nbins = fft_size // 2 + 1
         for nmels in test_mels:
