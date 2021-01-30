@@ -1,8 +1,11 @@
+import argparse
 import numpy
 import sys
+from pathlib import Path
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+
 
 
 def hz2mel(hz):
@@ -76,6 +79,10 @@ def get_filterbanks(nfilt=20,nfft=512,samplerate=16000,lowfreq=0,highfreq=None):
 
     return fbank
 
+def get_max_mel_filter_result(fbank):
+    filter_sums = fbank.sum(axis=1)
+    return numpy.amax(filter_sums)
+
 def apply_full_mel(bins, fbank):
     filtered = numpy.matmul(fbank, bins)
     # print(filtered.shape)
@@ -91,16 +98,20 @@ def get_shortended_line(line):
     # print(shortended_line)
     return shortended_line, first_non_zero_idx, next_zero_idx_or_end
 
-def gen_c_line(int32_data):
+def gen_c_line(float_data):
     line = ""
-    for data in int32_data:
-        line += f"{data}, "
+    for data in float_data:
+        int32_data = int(data * 0x7ffffff)
+        line += f"{int32_data}, "
+    line = line[:-1] + "\n"
     return line
 
 class compact_mel:
     def __init__(self, fbank):
         num_mels = fbank.shape[0]
         num_bins = fbank.shape[1]
+        self.num_mels = num_mels - 1 #because we add an extra one during geneeration
+        self.num_bins = num_bins
         compact_mel = []
 
         #We use the following properties to generate the compact mels:
@@ -118,18 +129,18 @@ class compact_mel:
 
         # print(len([item for sublist in compact_mel for item in sublist]))
         self.compact_mel = compact_mel
+        self.flattened_fbank =  [item for sublist in compact_mel for item in sublist]
 
     def filter(self, bins, filtered):
         compact_fbank = self.compact_mel
         max_mel = 1.0
-        num_bins = bins.shape[0]
+        num_bins = self.num_bins
         mel_even_idx = 0
         mel_odd_idx = 1
         mel_even_accum = 0
         mel_odd_accum = 0
         odd_mel_active_flag = False
-        compact_fbank = [item for sublist in compact_fbank for item in sublist] #flatten
-        self.flattened_fbank = compact_fbank
+        compact_fbank = self.flattened_fbank
         compact_fbank.append(0.0)
         for idx in range(num_bins):
             even_mel = compact_fbank[idx]
@@ -161,11 +172,21 @@ class compact_mel:
             count += len(filt)
         return count
 
-    def gen_c_src(self, var_name):
-        c_text = f"int32_t {var_name}[{len(self.flattened_fbank)}] = {{"
+    def gen_c_src(self, var_name, headroom_bits):
+        c_text = f"\n#ifndef _{var_name}_h_\n"
+        c_text += f"\n#define _{var_name}_h_\n"
+        c_text += f"#include <stdint.h>"
+        c_text += "\n"
+        c_text += f"#define AUDIO_FEATURES_NUM_MELS {self.num_mels}\n";
+        c_text += f"#define AUDIO_FEATURES_NUM_BINS {self.num_bins}\n";
+        c_text += f"#define AUDIO_FEATURES_MEL_HEADROOM_BITS {headroom_bits}\n";
+        c_text += "\n"
+        c_text += f"int32_t {var_name}[{len(self.flattened_fbank)}] = {{\n"
         for line in self.compact_mel:
-            c_text += gen_c_line(line)
-        c_text = c_text[:-1] + "}};\n"
+            c_text += "\t\t" + gen_c_line(line)
+        c_text = c_text[:-2] + "};\n" #chop off comma and space first
+        c_text += "\n#endif\n"
+
         
         return c_text
     
@@ -207,9 +228,7 @@ class compressed_mel:
         return count
 
 
-
-
-def test_equivalence(fft_size, nmels):
+def single_test_equivalence(fft_size, nmels):
     print(f"testing fft_size: {fft_size}, n mels: {nmels}")
     nbins = fft_size // 2 + 1
     test_bins = numpy.random.uniform(low=-1.0, high=1.0, size=(nbins))
@@ -234,7 +253,7 @@ def test_equivalence(fft_size, nmels):
 
     return result1 and result2
 
-def main():
+def test_equivalence_range():
     for fft_size, test_mels in (
         (64, (5,6,7)),
         (128, range(5, 13)),
@@ -247,6 +266,30 @@ def main():
             assert test_equivalence(fft_size, nmels)
     print("PASS")
 
+def main():
+    parser = argparse.ArgumentParser(description='Generate MEL tables script')
+    parser.add_argument('-fft_size', action="store", type=int)
+    parser.add_argument('-mel_size', action="store", type=int)
+    parser.add_argument('-path', action="store")
+    parser.add_argument('-type', action="store")
+    args = parser.parse_args()
+
+    fbank = get_filterbanks(args.mel_size, args.fft_size, 16000)
+    fbank_standard = fbank[ :-1]
+    my_compact_mel = compact_mel(fbank)
+    my_compressed_mel = compressed_mel(fbank_standard)
+    max_scale = get_max_mel_filter_result(fbank)
+    headroom_bits = int(numpy.ceil(numpy.log2(max_scale)))
+
+    print(args.type)
+    if args.type == 'compact':
+        name = f"mel_filter_{args.fft_size}_{args.mel_size}_compact"
+        c_text = my_compact_mel.gen_c_src(name, headroom_bits)
+        with open(Path(args.path) / (name + ".h"), "wt") as hfile:
+            hfile.write(c_text)
+    else:
+        assert 0 and "not yet supported"
+    
 if __name__ == "__main__":
     main()
 

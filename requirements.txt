@@ -3,4 +3,5 @@ tensorflow==2.3.0
 tflite==2.3.0
 numpy==1.18.5
 
+-e python
 -e ../../tools/ai_tools/third_party/tensorflow/tensorflow/examples
