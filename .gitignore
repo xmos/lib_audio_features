@@ -63,3 +63,5 @@ tests/xs3_try/CMakeFiles
 CopyOfCMakeCache.txt
 app_features
 python/mel/FB_tables
+app_equivalence
+tests/equivalence/CMakeFiles

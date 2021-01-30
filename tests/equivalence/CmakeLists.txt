@@ -23,14 +23,17 @@ set(BUILD_FLAGS
         "-target=XCORE-AI-EXPLORER"
         "-D__XS2A__"
         "-report"
+        "-fcmdline-buffer-bytes=256"
         )
 
 set(APP_SRCS
         src/main.c
+        ../../lib_audio_features/src/mel_filter.c
     )
 
 set(APP_INCLUDES
-        "src"
+        src
+        ../../lib_audio_features/src
     )
 
 file(GLOB_RECURSE XS3_MATH_VECT_C_SRCS ${XS3_MATH_PATH}/src/vect/*.c)
