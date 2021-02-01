@@ -1,6 +1,9 @@
 #include <limits.h>
 #include "mel_filter.h"
+#include "xs3_math.h"
+
 #include <stdio.h>
+
 
 
 void print_line(int32_t *data, unsigned n){
@@ -72,7 +75,7 @@ void apply_compressed_mel_filter(
     const int16_t indicies[][2],
     const size_t num_mels){
 
-    print_line(input_bins, num_bins);
+    // print_line(input_bins, num_bins);
 
     unsigned filter_idx = 0;
     for(int m = 0; m < num_mels; m++){
@@ -81,11 +84,26 @@ void apply_compressed_mel_filter(
         unsigned end_idx = indicies[m][1];
 
         //TODO replace with XS3 MATH
+#if 0
         int32_t mel_accum = 0; 
         for(int idx = start_idx; idx < end_idx; idx++){
             mel_accum += ((int64_t)input_bins[idx] * (int64_t)compressed_mel_filter[filter_idx]) >> (31);
             filter_idx++;
         }
         filtered[m] = mel_accum;
+        // printf("mel_accum: %ld\n", mel_accum);
+#else
+        unsigned length = end_idx - start_idx;
+        int64_t result = xs3_vect_s32_dot(
+            &input_bins[start_idx],
+            &compressed_mel_filter[filter_idx],
+            length,
+            0,
+            1);
+        filter_idx += length;
+        filtered[m] = result;
+        // printf("len: %ud result: %lld\n", length, result);
+#endif
+
     }
 }
