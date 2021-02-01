@@ -45,7 +45,7 @@ def main():
         hfile.write(c_text)
     os.environ['MEL_FILTER_H_FILE'] = name + ".h"
     result = subprocess.run("cmake .".split(), stdout=subprocess.PIPE, text=True)
-    result = subprocess.run("make".split(), stdout=subprocess.PIPE, text=True)
+    result = subprocess.run("make -j".split(), stdout=subprocess.PIPE, text=True)
 
     int_test = (test_bins * np.iinfo(np.int32).max).astype(np.int32)
     int_test.tofile("input.bin")
@@ -58,8 +58,9 @@ def main():
     print(ref_result.size, dut_result.size)
     print(ref_result, "\n", dut_result)
 
-    print(np.isclose(ref_result, dut_result, rtol=0.0000001))
-    assert(np.allclose(ref_result, dut_result, rtol=0.0000001))
+    rtol=0.00001 
+    print(np.isclose(ref_result, dut_result, rtol=rtol))
+    assert(np.allclose(ref_result, dut_result, rtol=rtol))
     print("TEST PASS")
 
 main()
