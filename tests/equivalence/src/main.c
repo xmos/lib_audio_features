@@ -34,13 +34,17 @@ int main(int argc, char *argv[]){
             printf("MEL test\n");
 
             for(int i = 0; i < iterations; i++){
-                const size_t incount = AUDIO_FEATURES_NUM_BINS;
-                const size_t outcount = AUDIO_FEATURES_NUM_MELS;
                 int32_t input_bins[AUDIO_FEATURES_NUM_BINS];
                 int32_t output_mels[AUDIO_FEATURES_NUM_MELS];
-                xassert(incount == fread((void*)input_bins, sizeof(input_bins[0]), incount, infile));
-                apply_compact_mel_filter(output_mels, input_bins, incount, mel_filter_512_20_compact, outcount, AUDIO_FEATURES_MEL_HEADROOM_BITS);
-                xassert(outcount == fwrite((void*)input_bins, sizeof(output_mels[0]), outcount, outfile));
+                xassert(AUDIO_FEATURES_NUM_BINS == fread((void*)input_bins, sizeof(input_bins[0]), AUDIO_FEATURES_NUM_BINS, infile));
+                apply_compact_mel_filter(output_mels,
+                                        input_bins,
+                                        AUDIO_FEATURES_NUM_BINS,
+                                        mel_filter_512_20_compact,
+                                        AUDIO_FEATURES_NUM_MELS,
+                                        AUDIO_FEATURES_MEL_MAX,
+                                        AUDIO_FEATURES_MEL_HEADROOM_BITS);
+                xassert(AUDIO_FEATURES_NUM_MELS == fwrite((void*)output_mels, sizeof(output_mels[0]), AUDIO_FEATURES_NUM_MELS, outfile));
             }
         break;
         default:

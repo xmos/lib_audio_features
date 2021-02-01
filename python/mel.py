@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-
+mel_max = 0x7fffffff
 
 def hz2mel(hz):
     """Convert a value in Hertz to Mels
@@ -101,7 +101,7 @@ def get_shortended_line(line):
 def gen_c_line(float_data):
     line = ""
     for data in float_data:
-        int32_data = int(data * 0x7ffffff)
+        int32_data = int(data * mel_max)
         line += f"{int32_data}, "
     line = line[:-1] + "\n"
     return line
@@ -179,6 +179,7 @@ class compact_mel:
         c_text += "\n"
         c_text += f"#define AUDIO_FEATURES_NUM_MELS {self.num_mels}\n";
         c_text += f"#define AUDIO_FEATURES_NUM_BINS {self.num_bins}\n";
+        c_text += f"#define AUDIO_FEATURES_MEL_MAX {mel_max}\n";
         c_text += f"#define AUDIO_FEATURES_MEL_HEADROOM_BITS {headroom_bits}\n";
         c_text += "\n"
         c_text += f"int32_t {var_name}[{len(self.flattened_fbank)}] = {{\n"
@@ -281,7 +282,7 @@ def main():
     max_scale = get_max_mel_filter_result(fbank)
     headroom_bits = int(numpy.ceil(numpy.log2(max_scale)))
 
-    print(args.type)
+    print(args)
     if args.type == 'compact':
         name = f"mel_filter_{args.fft_size}_{args.mel_size}_compact"
         c_text = my_compact_mel.gen_c_src(name, headroom_bits)
