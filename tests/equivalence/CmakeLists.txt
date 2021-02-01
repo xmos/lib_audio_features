@@ -17,9 +17,9 @@ set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp/lib_dsp)
 
 if(NOT DEFINED ENV{MEL_FILTER_H_FILE})
     message(FATAL_ERROR "MEL_FILTER_H_FILE env var not set")
-else(NOT DEFINED $ENV{MEL_FILTER_H_FILE})
+else()
     message(STATUS "using MEL_FILTER_H_FILE: $ENV{MEL_FILTER_H_FILE}")
-endif(NOT DEFINED $ENV{MEL_FILTER_H_FILE})
+endif()
  
 set(BUILD_FLAGS
         "-Os"
