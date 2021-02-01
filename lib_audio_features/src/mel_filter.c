@@ -16,8 +16,7 @@ void apply_compact_mel_filter(
     const size_t num_bins,
     int32_t* compact_mel_filter,
     const size_t num_mels,
-    const int32_t mel_max,
-    const size_t headroom){
+    const int32_t mel_max){
 
     unsigned mel_even_idx = 0;
     unsigned mel_odd_idx = 1;
@@ -35,11 +34,11 @@ void apply_compact_mel_filter(
         // int32_t odd_mel = mel_max - even_mel;
         // printf("%d %d %d\n", i, even_mel, odd_mel);
 
-        mel_even_accum += ((int64_t)input_bins[i] * (int64_t)even_mel) >> headroom;
-        // mel_even_accum_32 += (((int64_t)input_bins[i] * (int64_t)even_mel)) >> (headroom + 31);
+        mel_even_accum += ((int64_t)input_bins[i] * (int64_t)even_mel);
+        // mel_even_accum_32 += (((int64_t)input_bins[i] * (int64_t)even_mel)) >> (31);
         // printf("mel_even_accum %lld\n", mel_even_accum);
-        mel_odd_accum += ((int64_t)input_bins[i] * (int64_t)odd_mel) >> headroom;
-        // mel_odd_accum_32 += (((int64_t)input_bins[i] * (int64_t)odd_mel)) >> (headroom + 31);
+        mel_odd_accum += ((int64_t)input_bins[i] * (int64_t)odd_mel);
+        // mel_odd_accum_32 += (((int64_t)input_bins[i] * (int64_t)odd_mel)) >> (31);
         // printf("mel_odd_accum %lld\n", mel_odd_accum);
 
         if ((even_mel == 0) && (i != 0)){

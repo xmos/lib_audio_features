@@ -21,7 +21,6 @@ void apply_compact_mel_filter(
     const size_t num_bins,
     int32_t* compact_mel_filter,
     const size_t num_mels,
-    const int32_t mel_max,
-    const size_t headroom);
+    const int32_t mel_max);
 
 #endif

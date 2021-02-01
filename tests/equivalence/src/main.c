@@ -44,8 +44,7 @@ int main(int argc, char *argv[]){
                                         AUDIO_FEATURES_NUM_BINS,
                                         AUDIO_FEATURES_MEL_ARRAY_NAME,
                                         AUDIO_FEATURES_NUM_MELS,
-                                        AUDIO_FEATURES_MEL_MAX,
-                                        AUDIO_FEATURES_MEL_HEADROOM_BITS);
+                                        AUDIO_FEATURES_MEL_MAX);
                 uint32_t t1 = get_reference_time();
                 printf("MEL time: %lu\n", t1 - t0);
                 xassert(AUDIO_FEATURES_NUM_MELS == fwrite((void*)output_mels, sizeof(output_mels[0]), AUDIO_FEATURES_NUM_MELS, outfile));
