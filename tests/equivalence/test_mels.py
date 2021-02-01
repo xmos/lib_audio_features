@@ -1,6 +1,8 @@
 import numpy as np
 import subprocess
-from mel import get_filterbanks, apply_full_mel
+from mel import get_filterbanks, apply_full_mel, compact_mel
+from pathlib import Path
+import os
 
 def single_test_equivalence(fft_size, nmels):
     print(f"testing fft_size: {fft_size}, n mels: {nmels}")
@@ -28,13 +30,22 @@ def single_test_equivalence(fft_size, nmels):
 
 def main():
     fft_size = 512
-    nmels = 20
+    nmels = 33
     nbins = fft_size // 2 + 1
     test_bins = np.random.uniform(low=-1.0, high=1.0, size=(nbins))
-    # test_bins = np.ones(nbins)
+    # test_bins = np.ones(nbins) #Use this for debugging
 
-    fbank = get_filterbanks(nmels, fft_size, 16000)[ :-1] #note we lop of the last half bank used for compact only
-    ref_result = apply_full_mel(test_bins, fbank)
+    fbank = get_filterbanks(nmels, fft_size, 16000) 
+    ref_result = apply_full_mel(test_bins, fbank[ :-1])#note we lop of the last half bank used for compact only
+
+    my_compact_mel = compact_mel(fbank)
+    name = f"mel_filter_{fft_size}_{nmels}_compact"
+    c_text = my_compact_mel.gen_c_src(name)
+    with open(Path("src") / (name + ".h"), "wt") as hfile:
+        hfile.write(c_text)
+    os.environ['MEL_FILTER_H_FILE'] = name + ".h"
+    result = subprocess.run("cmake .".split(), stdout=subprocess.PIPE, text=True)
+    result = subprocess.run("make".split(), stdout=subprocess.PIPE, text=True)
 
     int_test = (test_bins * np.iinfo(np.int32).max).astype(np.int32)
     int_test.tofile("input.bin")
@@ -42,10 +53,13 @@ def main():
     result = subprocess.run(cmd.split(), stdout=subprocess.PIPE, text=True)
     print(result.stdout)
     dut_result = np.fromfile("output.bin", dtype=np.int32, count=-1)
-    dut_result = dut_result.astype(np.double) /  np.iinfo(np.int32).max * (1 << 5)
+    dut_result = dut_result.astype(np.double) /  np.iinfo(np.int32).max * (1 << my_compact_mel.get_headroom_bits())
   
     print(ref_result.size, dut_result.size)
-    print(ref_result, dut_result)
+    print(ref_result, "\n", dut_result)
 
+    print(np.isclose(ref_result, dut_result, rtol=0.0000001))
+    assert(np.allclose(ref_result, dut_result, rtol=0.0000001))
+    print("TEST PASS")
 
 main()

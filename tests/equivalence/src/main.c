@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <xcore/assert.h>
+#include <xcore/hwtimer.h>
 
-#include "mel_filter_512_20_compact.h"
+#include MEL_FILTER_H_FILE
 #include "mel_filter.h"
 
 enum feature_stage{
@@ -37,13 +38,16 @@ int main(int argc, char *argv[]){
                 int32_t input_bins[AUDIO_FEATURES_NUM_BINS];
                 int32_t output_mels[AUDIO_FEATURES_NUM_MELS];
                 xassert(AUDIO_FEATURES_NUM_BINS == fread((void*)input_bins, sizeof(input_bins[0]), AUDIO_FEATURES_NUM_BINS, infile));
+                uint32_t t0 = get_reference_time();
                 apply_compact_mel_filter(output_mels,
                                         input_bins,
                                         AUDIO_FEATURES_NUM_BINS,
-                                        mel_filter_512_20_compact,
+                                        AUDIO_FEATURES_MEL_ARRAY_NAME,
                                         AUDIO_FEATURES_NUM_MELS,
                                         AUDIO_FEATURES_MEL_MAX,
                                         AUDIO_FEATURES_MEL_HEADROOM_BITS);
+                uint32_t t1 = get_reference_time();
+                printf("MEL time: %lu\n", t1 - t0);
                 xassert(AUDIO_FEATURES_NUM_MELS == fwrite((void*)output_mels, sizeof(output_mels[0]), AUDIO_FEATURES_NUM_MELS, outfile));
             }
         break;
