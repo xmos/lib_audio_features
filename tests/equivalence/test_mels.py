@@ -1,6 +1,6 @@
 import numpy as np
 import subprocess
-from mel import get_filterbanks, apply_full_mel, compact_mel
+from mel import get_filterbanks, apply_full_mel, compact_mel, compressed_mel
 from pathlib import Path
 import os
 
@@ -30,17 +30,22 @@ def single_test_equivalence(fft_size, nmels):
 
 def main():
     fft_size = 512
-    nmels = 33
+    nmels = 49
     nbins = fft_size // 2 + 1
-    test_bins = np.random.uniform(low=-1.0, high=1.0, size=(nbins))
-    # test_bins = np.ones(nbins) #Use this for debugging
+    # test_bins = np.random.uniform(low=-1.0, high=1.0, size=(nbins))
+    test_bins = np.ones(nbins) #Use this for debugging
 
     fbank = get_filterbanks(nmels, fft_size, 16000) 
     ref_result = apply_full_mel(test_bins, fbank[ :-1])#note we lop of the last half bank used for compact only
 
-    my_compact_mel = compact_mel(fbank)
-    name = f"mel_filter_{fft_size}_{nmels}_compact"
-    c_text = my_compact_mel.gen_c_src(name)
+    # my_compact_mel = compact_mel(fbank)
+    # name = f"mel_filter_{fft_size}_{nmels}_compact"
+    # c_text = my_compact_mel.gen_c_src(name)
+
+    my_compressed_mel = compressed_mel(fbank)
+    name = f"mel_filter_{fft_size}_{nmels}_compressed"
+    c_text = my_compressed_mel.gen_c_src(name)
+
     with open(Path("src") / (name + ".h"), "wt") as hfile:
         hfile.write(c_text)
     os.environ['MEL_FILTER_H_FILE'] = name + ".h"
@@ -53,12 +58,13 @@ def main():
     result = subprocess.run(cmd.split(), stdout=subprocess.PIPE, text=True)
     print(result.stdout)
     dut_result = np.fromfile("output.bin", dtype=np.int32, count=-1)
-    dut_result = dut_result.astype(np.double) /  np.iinfo(np.int32).max * (1 << my_compact_mel.get_headroom_bits())
+    # dut_result = dut_result.astype(np.double) /  np.iinfo(np.int32).max * (1 << my_compact_mel.get_headroom_bits())
+    dut_result = dut_result.astype(np.double) /  np.iinfo(np.int32).max * (1 << my_compressed_mel.get_headroom_bits())
   
     print(ref_result.size, dut_result.size)
     print(ref_result, "\n", dut_result)
 
-    rtol=0.00001 
+    rtol=0.0000001 
     print(np.isclose(ref_result, dut_result, rtol=rtol))
     assert(np.allclose(ref_result, dut_result, rtol=rtol))
     print("TEST PASS")

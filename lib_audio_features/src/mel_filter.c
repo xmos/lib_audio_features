@@ -1,7 +1,8 @@
 #include <limits.h>
 #include "mel_filter.h"
-
 #include <stdio.h>
+
+
 void print_line(int32_t *data, unsigned n){
     for(int i = 0; i < n; i++){
         printf("%ld, ", data[i]);
@@ -31,7 +32,6 @@ void apply_compact_mel_filter(
     for(int i = 0; i < num_bins; i++){
         int32_t even_mel = compact_mel_filter[i];
         int32_t odd_mel = odd_mel_active_flag ? mel_max - even_mel : 0;
-        // int32_t odd_mel = mel_max - even_mel;
         // printf("%d %d %d\n", i, even_mel, odd_mel);
 
         mel_even_accum += ((int64_t)input_bins[i] * (int64_t)even_mel);
@@ -64,37 +64,28 @@ void apply_compact_mel_filter(
     }
 }
 
-#if 0
-unsigned apply_compressed_mel_filter(
+void apply_compressed_mel_filter(
     int32_t* filtered,
     int32_t* input_bins,
     const size_t num_bins,
-    compressed_mel_t* compressed_mel_filter,
+    int32_t* compressed_mel_filter,
+    const int16_t indicies[][2],
     const size_t num_mels){
 
-    xassert(num_mels == AUDIO_FEATURES_NUM_MELS && "num_mels passed does not match AUDIO_FEATURES_NUM_MELS");
-    xassert(num_bins == AUDIO_FEATURES_NUM_BINS && "num_bins passed does not match AUDIO_FEATURES_NUM_BINS");
+    print_line(input_bins, num_bins);
 
-    unsigned mel_even_idx = 0;
-    unsigned mel_odd_idx = 1;
-    int32_t mel_even_accum = 0;
-    int32_t mel_odd_accum = 0;
-    int odd_mel_active_flag = 0;
-
+    unsigned filter_idx = 0;
     for(int m = 0; m < num_mels; m++){
-        int32_t mel_accum = 0; 
 
-        unsigned start_idx = compressed_mel_filter->start_finish_indicies[m].start;
-        unsigned end_idx = compressed_mel_filter->start_finish_indicies[m].end;
-        int32_t* filter_ptr = compressed_mel_filter->filter_bank_ptrs[m];
+        unsigned start_idx = indicies[m][0];
+        unsigned end_idx = indicies[m][1];
 
-        unsigned mel_idx = 0;
         //TODO replace with XS3 MATH
-        for(int i = start_idx; i < end_idx; i++){
-            mel_accum += ((int64_t)input_bins[i] * (int64_t)filter_ptr[mel_idx]) >> (31 + AUDIO_FEATURES_MEL_HEADROOM_BITS);
-            mel_idx++;
+        int32_t mel_accum = 0; 
+        for(int idx = start_idx; idx < end_idx; idx++){
+            mel_accum += ((int64_t)input_bins[idx] * (int64_t)compressed_mel_filter[filter_idx]) >> (31);
+            filter_idx++;
         }
+        filtered[m] = mel_accum;
     }
-    return AUDIO_FEATURES_MEL_HEADROOM_BITS;
 }
-#endif
