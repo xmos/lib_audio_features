@@ -21,10 +21,10 @@ void apply_compact_mel_filter(
 
     unsigned mel_even_idx = 0;
     unsigned mel_odd_idx = 1;
-    // int64_t mel_even_accum = 0;
-    // int64_t mel_odd_accum = 0;
-    int32_t mel_even_accum_32 = 0;
-    int32_t mel_odd_accum_32 = 0;
+    int64_t mel_even_accum = 0;
+    int64_t mel_odd_accum = 0;
+    // int32_t mel_even_accum_32 = 0;
+    // int32_t mel_odd_accum_32 = 0;
     int odd_mel_active_flag = 0;
 
     // print_line(input_bins, num_bins);
@@ -35,30 +35,30 @@ void apply_compact_mel_filter(
         // int32_t odd_mel = mel_max - even_mel;
         // printf("%d %d %d\n", i, even_mel, odd_mel);
 
-        // mel_even_accum += ((int64_t)input_bins[i] * (int64_t)even_mel) >> headroom;
-        mel_even_accum_32 += (((int64_t)input_bins[i] * (int64_t)even_mel)) >> (headroom + 31);
+        mel_even_accum += ((int64_t)input_bins[i] * (int64_t)even_mel) >> headroom;
+        // mel_even_accum_32 += (((int64_t)input_bins[i] * (int64_t)even_mel)) >> (headroom + 31);
         // printf("mel_even_accum %lld\n", mel_even_accum);
-        // mel_odd_accum += ((int64_t)input_bins[i] * (int64_t)odd_mel) >> headroom;
-        mel_odd_accum_32 += (((int64_t)input_bins[i] * (int64_t)odd_mel)) >> (headroom + 31);
+        mel_odd_accum += ((int64_t)input_bins[i] * (int64_t)odd_mel) >> headroom;
+        // mel_odd_accum_32 += (((int64_t)input_bins[i] * (int64_t)odd_mel)) >> (headroom + 31);
         // printf("mel_odd_accum %lld\n", mel_odd_accum);
 
         if ((even_mel == 0) && (i != 0)){
-            // filtered[mel_even_idx] = mel_even_accum >> 31;
-            filtered[mel_even_idx] = mel_even_accum_32;
+            filtered[mel_even_idx] = mel_even_accum >> 31;
+            // filtered[mel_even_idx] = mel_even_accum_32;
             //print("even", mel_even_accum)
-            // mel_even_accum = 0;
-            mel_even_accum_32 = 0;            
+            mel_even_accum = 0;
+            // mel_even_accum_32 = 0;            
             mel_even_idx += 2;
         }
 
         if (even_mel == mel_max){
             odd_mel_active_flag = 1;
             if (mel_even_idx > 0){
-                // filtered[mel_odd_idx] = mel_odd_accum >> 31;
-                filtered[mel_odd_idx] = mel_odd_accum_32;
+                filtered[mel_odd_idx] = mel_odd_accum >> 31;
+                // filtered[mel_odd_idx] = mel_odd_accum_32;
                 //print("odd", mel_odd_accum)
-                // mel_odd_accum = 0;
-                mel_odd_accum_32 = 0;
+                mel_odd_accum = 0;
+                // mel_odd_accum_32 = 0;
                 mel_odd_idx += 2;
             }
         }
