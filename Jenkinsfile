@@ -102,9 +102,9 @@ pipeline {
     success {
       println "Finished"
     }
-    always {
-      // archiveArtifacts artifacts: "tests/pipelines/*.csv", fingerprint: true, allowEmptyArchive: true
-    }
+    // always {
+    //   archiveArtifacts artifacts: "tests/pipelines/*.csv", fingerprint: true, allowEmptyArchive: true
+    // }
     cleanup {
       cleanWs()
     }
