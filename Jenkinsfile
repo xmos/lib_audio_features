@@ -24,7 +24,7 @@ pipeline {
         checkout scm
         sh "git submodule update --jobs 8 --init --recursive"
         sh "git clone -b v1.1.3 git@github0.xmos.com:xmos-int/xtagctl.git"
-	    sh "git clone --depth 1 --jobs 8 --recurse-submodules https://github.com/xmos/aiot_sdk.git"
+	    sh "git clone --depth 1 --jobs 8 --recurse-submodules git@github.com:xmos/aiot_sdk.git"
         sh "cp tests/bringup_py/setup.py ../aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
       }
     }
