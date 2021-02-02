@@ -49,10 +49,9 @@ pipeline {
     stage('Build') {
       steps {
         toolsEnv(TOOLS_PATH) {  // load xmos tools
-          sh 'python3 aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dit --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
-          // sh 'cd tests/test_callback && make'
-          // if you want to build once and distribute to multiple later stages
-          // use "stash/unstash"
+          withVenv() {
+            sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dit --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
+          }
         }
       }
     }
