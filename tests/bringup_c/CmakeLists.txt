@@ -1,0 +1,138 @@
+cmake_minimum_required(VERSION 3.0)
+
+
+## Define project
+project(app_features VERSION 0.1.0)
+
+#**********************
+# Build flags
+#**********************
+add_executable(app_features)
+
+set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
+set(TF_PATH ${AIOT_PATH}/tools/ai_tools/third_party/tensorflow)
+set(MS_PATH ${TF_PATH}/tensorflow/lite/micro/examples/micro_speech)
+set(MF_PATH ${TF_PATH}/tensorflow/lite/micro/examples/micro_speech/micro_features)
+set(FE_PATH ${TF_PATH}/tensorflow/lite/experimental/microfrontend)
+set(TP_PATH ${AIOT_PATH}/tools/ai_tools/third_party)
+set(BM_PATH ${AIOT_PATH}/examples/bare-metal/micro_speech/kissfft)
+set(TL_PATH ${TF_PATH}/tensorflow/lite)
+
+
+set(APP_COMPILER_FLAGS
+        "-Os"
+        "-g"
+        # "-target=XCORE-AI-EXPLORER"
+        -DTF_LITE_DISABLE_X86_NEON=1
+        )
+
+set(APP_SRCS
+        "./src/main.c"
+        "./src/main_functions.cc"
+    )
+
+set(APP_INCLUDES
+        "src"
+    )
+file(GLOB_RECURSE KL_SRCS ${TL_PATH}/kernels/*.cc)
+
+set(TF_SRCS
+        ${MF_PATH}/micro_features_generator.cc
+        ${MF_PATH}/micro_model_settings.cc
+        
+        ${MS_PATH}/feature_provider.cc
+        ${MS_PATH}/simple_features/model.cc
+        ${MS_PATH}/recognize_commands.cc
+
+        ${FE_PATH}/audio_microfrontend.cc
+        ${FE_PATH}/lib/frontend_util.c
+        ${FE_PATH}/lib/frontend.c
+        ${FE_PATH}/lib/fft_util.cc
+        ${FE_PATH}/lib/fft.cc
+        ${FE_PATH}/lib/filterbank_util.c
+        ${FE_PATH}/lib/filterbank.c
+        ${FE_PATH}/lib/log_scale.c
+        ${FE_PATH}/lib/log_scale_util.c
+        ${FE_PATH}/lib/noise_reduction.c
+        ${FE_PATH}/lib/noise_reduction_util.c
+        ${FE_PATH}/lib/pcan_gain_control.c
+        ${FE_PATH}/lib/pcan_gain_control_util.c
+        ${FE_PATH}/lib/window_util.c
+        ${FE_PATH}/lib/window.c
+        ${FE_PATH}/lib/log_lut.c
+
+        ${BM_PATH}/tools/kiss_fftr.c
+        ${BM_PATH}/kiss_fft.c
+
+        ${TL_PATH}/c/common.c
+        ${TL_PATH}/kernels/kernel_util.cc
+        ${TL_PATH}/core/api/flatbuffer_conversions.cc
+
+        "${TL_PATH}/micro/kernels/softmax.cc"
+        "${TL_PATH}/micro/kernels/fully_connected.cc"
+        "${TL_PATH}/micro/kernels/reshape.cc"
+        "${TL_PATH}/micro/kernels/kernel_util.cc"
+        "${TL_PATH}/micro/kernels/depthwise_conv.cc"
+
+
+        ${TL_PATH}/kernels/internal/quantization_util.cc
+        "${TL_PATH}/core/api/error_reporter.cc"
+        "${TL_PATH}/core/api/flatbuffer_conversions.cc"
+        "${TL_PATH}/core/api/op_resolver.cc"
+        "${TL_PATH}/core/api/tensor_utils.cc"
+        "${TL_PATH}/kernels/internal/quantization_util.cc"
+        "${TL_PATH}/micro/memory_helpers.cc"
+        "${TL_PATH}/micro/micro_allocator.cc"
+        "${TL_PATH}/micro/recording_micro_allocator.cc"
+        "${TL_PATH}/micro/micro_error_reporter.cc"
+        "${TL_PATH}/micro/micro_interpreter.cc"
+        "${TL_PATH}/micro/micro_profiler.cc"
+        "${TL_PATH}/micro/micro_utils.cc"
+        "${TL_PATH}/micro/micro_string.cc"
+        "${TL_PATH}/micro/simple_memory_allocator.cc"
+        "${TL_PATH}/micro/recording_simple_memory_allocator.cc"
+        "${TL_PATH}/micro/memory_planner/greedy_memory_planner.cc"
+        "${TL_PATH}/schema/schema_utils.cc"
+
+
+        # ${KL_SRCS}
+    )
+
+
+set(TF_INCLUDES
+        # ${MF_PATH}
+        # ${TF_PATH}/tensorflow/lite/micro/examples/micro_speech
+        ${TF_PATH}
+        ${FE_PATH}/lib
+        ${TP_PATH}/flatbuffers/include
+        ${BM_PATH}
+        ${TL_PATH}/micro
+        ${AIOT_PATH}/tools/ai_tools/third_party/gemmlowp
+        /Applications/Xcode.app//Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1
+    )
+
+
+#include("$ENV{VOICE_FRONT_END_PATH}/cmake_utils/vfe.cmake")
+
+file(MAKE_DIRECTORY bin)
+set_target_properties(app_features PROPERTIES OUTPUT_NAME bin/app_features)
+
+target_compile_options(app_features PRIVATE ${APP_COMPILER_FLAGS})
+
+target_include_directories(app_features
+  PRIVATE ${APP_INCLUDES}
+  PRIVATE ${TF_INCLUDES}
+)
+
+target_sources(app_features
+    PRIVATE ${APP_SRCS}
+    PRIVATE ${TF_SRCS}
+)
+
+target_link_options(app_features PRIVATE ${APP_COMPILER_FLAGS})
+
+
+## Set any additional flags only for C++
+set(CMAKE_CXX_FLAGS  "-std=c++11")
+
+
