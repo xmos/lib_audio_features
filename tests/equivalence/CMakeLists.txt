@@ -57,9 +57,6 @@ set(XS3_MATH_SRCS
     )
 
 set(VTB_SRCS
-        ${VTB_PATH}/src/bfp/vtb_utilities.xc
-        ${VTB_PATH}/src/bfp/asm/vtb_hypot.S
-        ${VTB_PATH}/src/bfp/asm/vtb_steer.S
     )
 
 set(DSP_SRCS

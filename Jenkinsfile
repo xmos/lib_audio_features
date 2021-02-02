@@ -52,6 +52,7 @@ pipeline {
         toolsEnv(TOOLS_PATH) {  // load xmos tools
           withVenv() {
             sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dit --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
+            // sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dif --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
           }
         }
       }
