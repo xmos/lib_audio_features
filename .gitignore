@@ -69,3 +69,4 @@ python/lib_audio_features.egg-info
 tests/equivalence/src/mel_filter_*.h
 examples/xs3_try/CMakeFiles
 examples/mfcc/CMakeFiles
+pytest_result.xml

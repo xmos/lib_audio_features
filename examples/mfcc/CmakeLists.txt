@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
+set(AIOT_PATH $ENV{XMOS_AIOT_SDK_PATH})
 
 include("${AIOT_PATH}/tools/cmake_utils/xmos_toolchain.cmake") 
 enable_language(CXX XC C ASM)
@@ -29,10 +29,12 @@ set(APP_SRCS
         src/main.c
         # src/xs3_fft_lut.c
         src/util.xc
+        ../../lib_audio_features/src/ln.c
     )
 
 set(APP_INCLUDES
-        "src"
+        src
+        ../../lib_audio_features/src
     )
 
 file(GLOB_RECURSE XS3_MATH_VECT_C_SRCS ${XS3_MATH_PATH}/src/vect/*.c)
