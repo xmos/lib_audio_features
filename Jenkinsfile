@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@feature/install-virtualenv') _
+@Library('xmos_jenkins_shared_library@v0.16.0') _
 
 pipeline {
   agent {
