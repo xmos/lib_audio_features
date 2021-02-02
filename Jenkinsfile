@@ -28,6 +28,7 @@ pipeline {
 	    sh "git clone --depth 1 --jobs 8 --recurse-submodules git@github.com:xmos/aiot_sdk.git"
         //Manually copy over setup file so we can access python modules from 
         sh 'ls'
+        sh 'ls ..'
         sh "cp tests/bringup_py/setup.py ../aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
       }
     }
