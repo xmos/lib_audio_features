@@ -60,8 +60,6 @@ set(VTB_SRCS
     )
 
 set(DSP_SRCS
-        ${DSP_PATH}/src/bfp/dsp_bfp_cls.S
-        ${DSP_PATH}/src/dsp_math.c
     )
 
 
