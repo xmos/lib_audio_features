@@ -85,9 +85,11 @@ pipeline {
                 dir('tests/equivalence') {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
-                      sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
-                      junit 'pytest_result.xml'
-                    }          
+                      withEnv(["DISPLAY=none", "XMOS_ROOT=../.."]) {
+                        sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
+                        junit 'pytest_result.xml'
+                      }
+                    }
                   }
                 }
               }
