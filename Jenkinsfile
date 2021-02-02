@@ -24,9 +24,9 @@ pipeline {
         checkout scm
         sh "git submodule update --jobs 4 --init --recursive"
         sh "git clone -b v1.1.3 git@github0.xmos.com:xmos-int/xtagctl.git"
-	sh "git clone git@github.com:xmos/lib_xs3_math.git"
-	sh "git clone git@github.com:xmos/lib_dsp.git"
-	sh "git clone git@github.com:xmos/lib_logging.git"
+        sh "git clone git@github.com:xmos/lib_xs3_math.git"
+        sh "git clone git@github.com:xmos/lib_dsp.git"
+        sh "git clone git@github.com:xmos/lib_logging.git"
       }
     }
     stage('Install Dependencies') {
