@@ -56,7 +56,6 @@ set(XS3_MATH_SRCS
         ${XS3_MATH_ARCH_S_SRCS}
     )
 
-
 set(VTB_SRCS
         ${VTB_PATH}/src/bfp/vtb_utilities.xc
         ${VTB_PATH}/src/bfp/asm/vtb_hypot.S
