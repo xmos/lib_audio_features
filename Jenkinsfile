@@ -27,9 +27,7 @@ pipeline {
         //Note shallow clone of AIOT to speed up regression
 	    sh "git clone --depth 1 --jobs 8 --recurse-submodules git@github.com:xmos/aiot_sdk.git"
         //Manually copy over setup file so we can access python modules from 
-        sh 'ls'
-        sh 'ls ..'
-        sh "cp tests/bringup_py/setup.py ../aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
+        sh "cp tests/bringup_py/setup.py aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
       }
     }
     stage('Install Dependencies') {
@@ -88,7 +86,7 @@ pipeline {
                 dir('tests/equivalence') {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
-                      withEnv(["DISPLAY=none", "XMOS_ROOT=../.."]) {
+                      withEnv(["DISPLAY=none", "AIOT_PATH=../../aiot_sdk"]) {
                         sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
                         junit 'pytest_result.xml'
                       }

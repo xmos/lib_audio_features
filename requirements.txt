@@ -11,4 +11,4 @@ numpy==1.18.5
 matplotlib==3.3.4
 
 -e python
--e ../aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples
+-e aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples
