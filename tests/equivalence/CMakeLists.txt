@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-set(AIOT_PATH /Users/ed/sandboxes/aiot_sdk)
+set(AIOT_PATH $ENV{XMOS_AIOT_SDK_PATH})
 
 include("${AIOT_PATH}/tools/cmake_utils/xmos_toolchain.cmake") 
 enable_language(CXX XC C ASM)
 
-set(APP_NAME app_features)
+set(APP_NAME app_equivalence)
 project(${APP_NAME} VERSION 0.1.0)
 
 set(INSTALL_DIR "${PROJECT_SOURCE_DIR}/bin")
@@ -15,24 +15,30 @@ set(XS3_MATH_PATH ${AIOT_PATH}/modules/lib_xs3_math/lib_xs3_math)
 set(VTB_PATH ${AIOT_PATH}/modules/lib_voice_toolbox/lib_voice_toolbox)
 set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp/lib_dsp)
 
-
-
+if(NOT DEFINED ENV{MEL_FILTER_H_FILE})
+    message(FATAL_ERROR "MEL_FILTER_H_FILE env var not set")
+else()
+    message(STATUS "using MEL_FILTER_H_FILE: $ENV{MEL_FILTER_H_FILE}")
+endif()
+ 
 set(BUILD_FLAGS
         "-Os"
         "-g"
         "-target=XCORE-AI-EXPLORER"
         "-D__XS2A__"
         "-report"
+        "-fcmdline-buffer-bytes=256"
+        "-DMEL_FILTER_H_FILE=\"$ENV{MEL_FILTER_H_FILE}\""
         )
 
 set(APP_SRCS
         src/main.c
-        # src/xs3_fft_lut.c
-        src/util.xc
+        ../../lib_audio_features/src/mel_filter.c
     )
 
 set(APP_INCLUDES
-        "src"
+        src
+        ../../lib_audio_features/src
     )
 
 file(GLOB_RECURSE XS3_MATH_VECT_C_SRCS ${XS3_MATH_PATH}/src/vect/*.c)
@@ -50,18 +56,11 @@ set(XS3_MATH_SRCS
         ${XS3_MATH_ARCH_S_SRCS}
     )
 
-
 set(VTB_SRCS
-        ${VTB_PATH}/src/bfp/vtb_utilities.xc
-        ${VTB_PATH}/src/bfp/asm/vtb_hypot.S
-        ${VTB_PATH}/src/bfp/asm/vtb_steer.S
     )
 
 set(DSP_SRCS
-        ${DSP_PATH}/src/bfp/dsp_bfp_cls.S
-        ${DSP_PATH}/src/dsp_math.c
     )
-
 
 
 target_include_directories(${APP_NAME}

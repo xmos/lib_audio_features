@@ -76,7 +76,7 @@ def do_test_run(fft_size, nmels, type):
     assert(np.allclose(ref_result, dut_result, rtol=rtol))
     print("TEST PASS")
 
-def main():
+def test_mels():
     fft_size = 512
     nmels = 49
 
@@ -86,4 +86,6 @@ def main():
     nmels = 20
     do_test_run(fft_size, nmels, "compact")
     do_test_run(fft_size, nmels, "compressed")
-main()
+
+if __name__ == "__main__":
+    test_mels()

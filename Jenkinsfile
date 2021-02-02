@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@feature/install-virtualenv') _
+@Library('xmos_jenkins_shared_library@v0.16.0') _
 
 pipeline {
   agent {
@@ -24,8 +24,11 @@ pipeline {
         checkout scm
         sh "git submodule update --jobs 8 --init --recursive"
         sh "git clone -b v1.1.3 git@github0.xmos.com:xmos-int/xtagctl.git"
-	    sh "git clone --depth 1 --jobs 8 --recurse-submodules https://github.com/xmos/aiot_sdk.git"
-        sh "cp tests/bringup_py/setup.py ../aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
+        //Note shallow clone of AIOT to speed up regression
+	    sh "git clone --depth 1 --jobs 8 --recurse-submodules git@github.com:xmos/aiot_sdk.git"
+        sh "cd aiot_sdk/modules/lib_xs3_math && git checkout develop && cd -"
+        //Manually copy over setup file so we can access python modules from 
+        sh "cp tests/bringup_py/setup.py aiot_sdk/tools/ai_tools/third_party/tensorflow/tensorflow/examples/"
       }
     }
     stage('Install Dependencies') {
@@ -47,11 +50,10 @@ pipeline {
     stage('Build') {
       steps {
         toolsEnv(TOOLS_PATH) {  // load xmos tools
-          sh 'cd tests/test_callback && make'
-          sh 'cd tests/test_timing && make'
-          sh 'export VOICE_FRONT_END_PATH=`pwd` && cd examples/app_vu && ls && cmake . -B build && cd build && make'
-          // if you want to build once and distribute to multiple later stages
-          // use "stash/unstash"
+          withVenv() {
+            sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dit --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
+            // sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dif --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
+          }
         }
       }
     }
@@ -70,7 +72,7 @@ pipeline {
                 dir('tests') {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
-                      sh 'echo "hello world'
+                      sh 'echo "hello world"'
                     }
                   }
                 }
@@ -80,14 +82,16 @@ pipeline {
         }
         stage('xsim tests'){
           stages{
-            stage('callback test'){
+            stage('Model to Xcore equivalence'){
               steps {
                 dir('tests/equivalence') {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
-                      sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
-                      junit 'pytest_result.xml'
-                    }          
+                      withEnv(["DISPLAY=none", "XMOS_AIOT_SDK_PATH=../../aiot_sdk"]) {
+                        sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
+                        junit 'pytest_result.xml'
+                      }
+                    }
                   }
                 }
               }
@@ -101,9 +105,9 @@ pipeline {
     success {
       println "Finished"
     }
-    always {
-      // archiveArtifacts artifacts: "tests/pipelines/*.csv", fingerprint: true, allowEmptyArchive: true
-    }
+    // always {
+    //   archiveArtifacts artifacts: "tests/pipelines/*.csv", fingerprint: true, allowEmptyArchive: true
+    // }
     cleanup {
       cleanWs()
     }
