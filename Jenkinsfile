@@ -70,7 +70,7 @@ pipeline {
                 dir('tests') {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
-                      sh 'echo "hello world'
+                      sh 'echo "hello world"'
                     }
                   }
                 }
@@ -80,7 +80,7 @@ pipeline {
         }
         stage('xsim tests'){
           stages{
-            stage('callback test'){
+            stage('Model to Xcore equivalence'){
               steps {
                 dir('tests/equivalence') {
                   withVenv() {
