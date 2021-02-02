@@ -66,3 +66,4 @@ python/mel/FB_tables
 app_equivalence
 tests/equivalence/CMakeFiles
 python/lib_audio_features.egg-info
+tests/equivalence/src/mel_filter_*.h

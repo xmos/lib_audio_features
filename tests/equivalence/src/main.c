@@ -32,27 +32,35 @@ int main(int argc, char *argv[]){
 
     switch(stage){
         case MEL:
-            printf("MEL test\n");
-
+            // printf("MEL test\n");
             for(int i = 0; i < iterations; i++){
                 int32_t input_bins[AUDIO_FEATURES_NUM_BINS];
                 int32_t output_mels[AUDIO_FEATURES_NUM_MELS];
                 xassert(AUDIO_FEATURES_NUM_BINS == fread((void*)input_bins, sizeof(input_bins[0]), AUDIO_FEATURES_NUM_BINS, infile));
                 uint32_t t0 = get_reference_time();
-                // apply_compact_mel_filter(output_mels,
-                //                         input_bins,
-                //                         AUDIO_FEATURES_NUM_BINS,
-                //                         AUDIO_FEATURES_MEL_ARRAY_NAME,
-                //                         AUDIO_FEATURES_NUM_MELS,
-                //                         AUDIO_FEATURES_MEL_MAX);
+                #ifdef AUDIO_FEATURES_MEL_INDICIES_NAME
                 apply_compressed_mel_filter(output_mels,
                                             input_bins,
                                             AUDIO_FEATURES_NUM_BINS,
                                             AUDIO_FEATURES_MEL_ARRAY_NAME,
                                             AUDIO_FEATURES_MEL_INDICIES_NAME,
                                             AUDIO_FEATURES_NUM_MELS);
+                char type_string[] = "compressed";
+                #else
+                apply_compact_mel_filter(output_mels,
+                                        input_bins,
+                                        AUDIO_FEATURES_NUM_BINS,
+                                        AUDIO_FEATURES_MEL_ARRAY_NAME,
+                                        AUDIO_FEATURES_NUM_MELS,
+                                        AUDIO_FEATURES_MEL_MAX);
+                char type_string[] = "compact";
+                #endif
                 uint32_t t1 = get_reference_time();
-                printf("MEL time: %lu\n", t1 - t0);
+                printf("\nMEL processing time for %i bins and %i mels using %s: %u\n",
+                    AUDIO_FEATURES_NUM_BINS,
+                    AUDIO_FEATURES_NUM_MELS,
+                    type_string,
+                    (int)(t1 - t0));
                 xassert(AUDIO_FEATURES_NUM_MELS == fwrite((void*)output_mels, sizeof(output_mels[0]), AUDIO_FEATURES_NUM_MELS, outfile));
             }
         break;
