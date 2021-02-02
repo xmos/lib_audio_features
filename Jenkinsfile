@@ -48,9 +48,8 @@ pipeline {
     stage('Build') {
       steps {
         toolsEnv(TOOLS_PATH) {  // load xmos tools
-          sh 'cd tests/test_callback && make'
-          sh 'cd tests/test_timing && make'
-          sh 'export VOICE_FRONT_END_PATH=`pwd` && cd examples/app_vu && ls && cmake . -B build && cd build && make'
+          sh 'echo "will build stuff here"'
+          // sh 'cd tests/test_callback && make'
           // if you want to build once and distribute to multiple later stages
           // use "stash/unstash"
         }
