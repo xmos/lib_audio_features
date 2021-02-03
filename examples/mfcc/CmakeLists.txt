@@ -30,6 +30,7 @@ set(APP_SRCS
         # src/xs3_fft_lut.c
         src/util.xc
         ../../lib_audio_features/src/ln.c
+        ../../lib_audio_features/src/mfcc.c
     )
 
 set(APP_INCLUDES
@@ -62,6 +63,7 @@ set(VTB_SRCS
 set(DSP_SRCS
         ${DSP_PATH}/src/bfp/dsp_bfp_cls.S
         ${DSP_PATH}/src/dsp_math.c
+        ${DSP_PATH}/src/dsp_dct.xc
     )
 
 

@@ -5,10 +5,10 @@
 #include <xcore/hwtimer.h>
 
 #include "bfp_math.h"
-#include "ln.h"
+#include "mfcc.h"
 
 // I used python gen_fft_table.py --max_fft_log2 9 --dit for xs3_fft_lut.*
-#define FFT_SIZE 64
+#define FFT_SIZE 512
 unsigned time_start, time_stop;
 #define TIME_START(x) time_start = get_reference_time();
 #define TIME_STOP(msg) time_stop = get_reference_time(); printf("%s: %u ticks\n", msg, time_stop - time_start);
@@ -72,107 +72,22 @@ void get_noise_array(int32_t *array, unsigned n);
 int main(void){
     printf("Hello\n");
 
-    uq8_24 x = 100 * 1 << 24;
-    TIME_START()
-    q8_24 result = dsp_math_log(x);
-    TIME_STOP("dsp_math_log")
-    printf("%f\n", BFP_FLOAT(result, -24));
-
-    printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX));
-    //THIS FAILS
-    //printf("max dsp_math_log: %d\n", (int)dsp_math_log(INT_MAX + 1));
-
-    const unsigned calc_hr = 1; //Bool
 
     TIME_START()
     int32_t hanning_window_data[FFT_SIZE];
     make_hanning(hanning_window_data, FFT_SIZE);
     TIME_STOP("make_hanning")
 
-    TIME_START()
-    bfp_s32_t hanning_window;
-    bfp_s32_init(&hanning_window, hanning_window_data, -31 /*exp*/, FFT_SIZE, calc_hr);
-    TIME_STOP("bfp_s32_init")
-    print_int_array(hanning_window_data, 4);
-    print_bfp_array(&hanning_window, 4);
+    #define MFCC_SIZE 20
+    audio_features_mfcc_t mfcc_config;
+    init_mfcc(&mfcc_config, MFCC_SIZE, MFCC_SIZE, 9, hanning_window_data);
 
+    int32_t samps[FFT_SIZE];
+    get_noise_array(samps, FFT_SIZE);
 
-    int32_t windowed_samples_data[FFT_SIZE];
-    get_noise_array(windowed_samples_data, FFT_SIZE);
-    bfp_s32_t input_samples;
-    bfp_s32_init(&input_samples, windowed_samples_data, 0 /*exp*/, FFT_SIZE, calc_hr);
+    int32_t mfccs[MFCC_SIZE];
 
-    bfp_s32_t windowed_samples;
-    bfp_s32_init(&windowed_samples, windowed_samples_data, 0 /*exp*/, FFT_SIZE, calc_hr);
-
-    TIME_START()
-    bfp_s32_mul(&windowed_samples, &input_samples, &hanning_window);
-    TIME_STOP("bfp_s32_mul")
-    // print_bfp_array_val(&windowed_samples, FFT_SIZE);
-    
-
-    // Initialize time domain data with samples.
-    int32_t buffer[FFT_SIZE] = {1, 2 ,3, 4, 5, 6, 7, 8};
-    bfp_s32_t samples;
-    bfp_s32_init(&samples, buffer, 0 /*exp*/, FFT_SIZE, calc_hr);
-
-    int32_t buffer_scaled[FFT_SIZE] = {0};
-    bfp_s32_t samples_scaled;
-    bfp_s32_init(&samples_scaled, buffer_scaled, 0 /*exp*/, FFT_SIZE, calc_hr);
-
-    int32_t buffer_mulled[FFT_SIZE] = {0};
-    bfp_s32_t samples_mulled;
-    bfp_s32_init(&samples_mulled, buffer_mulled, 0 /*exp*/, FFT_SIZE, calc_hr);
-
-
-    TIME_START()
-    float_s32_t scalar = {/*mant*/8, /*exp*/0};
-    bfp_s32_scale(&samples_scaled, &samples, scalar);
-    TIME_STOP("bfp_s32_scale")
-
-
-    for(int i=0; i<4; i++){
-        print_bfp(&samples, i);
-    }
-
-    for(int i=0; i<4; i++){
-        print_bfp(&samples_scaled, i);
-    }
-
-    bfp_s32_mul(&samples_mulled, &samples_scaled, &samples);
-
-
-    for(int i=0; i<4; i++){
-        print_bfp(&samples_mulled, i);
-    }
-
-    // Perform the forward DFT
-    TIME_START()
-    bfp_complex_s32_t* spectrum_cplx = bfp_fft_forward_mono(&samples);
-    TIME_STOP("bfp_fft_forward_mono")
-
-    // `samples` should no longer be used.
-    // Operate on frequency domain data using `spectrum`
-    
-    bfp_s32_t mag;
-    int32_t buffer_mag[FFT_SIZE/2];
-    bfp_s32_init(&mag, buffer_mag, 0 /*exp*/, FFT_SIZE/2, calc_hr);
-    TIME_START()
-    bfp_complex_s32_mag(&mag, spectrum_cplx);
-    TIME_STOP("bfp_complex_s32_mag")
-
-    print_cpx_bfp_array(spectrum_cplx, 10);
-    print_bfp_array(&mag, 10);
-
-
-    // Use `samples` again to use new time domain data. 
-
-    bfp_s32_t log_mag;
-    bfp_s32_init(&log_mag, buffer_mulled, 0 /*exp*/, FFT_SIZE/2, calc_hr);
-    TIME_START()
-    bfp_ln_s32(&log_mag, &mag, FFT_SIZE/2);
-    TIME_STOP("bfp_ln_s32")
-    print_bfp_array(&log_mag, 10);
+    mfcc(mfccs, samps, &mfcc_config);
 
 
 

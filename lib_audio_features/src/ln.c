@@ -24,9 +24,9 @@ void bfp_ln_s32(bfp_s32_t *ln_out, bfp_s32_t *bfp_in, unsigned n){
     exponent_t exp_max = (exponent_t)((double)INT_MAX / log(2) / (1 << ln_frac_bits)) - 31; //154
     int32_t clip_val = (int32_t)(log(2 * pow(2.0, exp_max)) * (1 << ln_frac_bits));//106.7446658062 << 24
 
-    printf("exp_min: %d\n", (int)exp_min);
-    printf("exp_max: %d\n", (int)exp_max);
-    printf("clip_val: %d\n", (int)clip_val);
+    // printf("exp_min: %d\n", (int)exp_min);
+    // printf("exp_max: %d\n", (int)exp_max);
+    // printf("clip_val: %d\n", (int)clip_val);
 
     if(exp_in < exp_min){
         printf("WARNING EXP MIN EXCEEDED\n");
@@ -53,6 +53,6 @@ void bfp_ln_s32(bfp_s32_t *ln_out, bfp_s32_t *bfp_in, unsigned n){
     }
     //We don't need to normalise since the output range of ln is -128 to +127 which covers
     //2.57E-56 to 3.888E+55 with clipping protection, which should be enough and exceeds SPFP input range.
-    //log does a good job of squishfying the large dynamic range of the input
+    //log does a good job of squishfying the large dynamic range of the input..
     ln_out->exp = -ln_frac_bits;
 }
