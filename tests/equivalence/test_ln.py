@@ -31,7 +31,7 @@ def do_test_run(ln_vect_len, max_in=np.finfo(np.float32).max, rtol=0.000001):
     ref_results = np.log(test_vect)
 
     bfp_array = float_to_s32bfp(test_vect)
-    assert np.allclose(test_vect, s32bfp_to_float(bfp_array))
+    assert np.allclose(test_vect, s32bfp_to_float(bfp_array), rtol=0.000001)
     bfp_array.tofile("input.bin")
     cmd = "xsim --args app_equivalence input.bin output.bin 1"
     result = subprocess.run(cmd.split(), stdout=subprocess.PIPE, text=True)
