@@ -13,7 +13,7 @@ add_executable(${APP_NAME})
 
 set(XS3_MATH_PATH ${AIOT_PATH}/modules/lib_xs3_math/lib_xs3_math)
 set(VTB_PATH ${AIOT_PATH}/modules/lib_voice_toolbox/lib_voice_toolbox)
-set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp/lib_dsp)
+set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp)
 
  
 set(BUILD_FLAGS
