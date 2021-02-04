@@ -58,7 +58,7 @@ def do_test_run(fft_size, nmels, type):
 
     int_test = (test_bins * np.iinfo(np.int32).max).astype(np.int32)
     int_test.tofile("input.bin")
-    cmd = "xsim --args app_equivalence 0 input.bin output.bin 1"
+    cmd = "xsim --args app_equivalence input.bin output.bin 1"
     result = subprocess.run(cmd.split(), stdout=subprocess.PIPE, text=True)
     print(result.stdout)
     dut_result = np.fromfile("output.bin", dtype=np.int32, count=-1)

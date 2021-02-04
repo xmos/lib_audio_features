@@ -15,11 +15,6 @@ set(XS3_MATH_PATH ${AIOT_PATH}/modules/lib_xs3_math/lib_xs3_math)
 set(VTB_PATH ${AIOT_PATH}/modules/lib_voice_toolbox/lib_voice_toolbox)
 set(DSP_PATH ${AIOT_PATH}/modules/lib_dsp/lib_dsp/lib_dsp)
 
-if(NOT DEFINED ENV{MEL_FILTER_H_FILE})
-    message(FATAL_ERROR "MEL_FILTER_H_FILE env var not set")
-else()
-    message(STATUS "using MEL_FILTER_H_FILE: $ENV{MEL_FILTER_H_FILE}")
-endif()
  
 set(BUILD_FLAGS
         "-Os"
@@ -28,12 +23,22 @@ set(BUILD_FLAGS
         "-D__XS2A__"
         "-report"
         "-fcmdline-buffer-bytes=256"
-        "-DMEL_FILTER_H_FILE=\"$ENV{MEL_FILTER_H_FILE}\""
         )
+
+if(DEFINED ENV{MEL_FILTER_H_FILE})
+    message(STATUS "using MEL_FILTER_H_FILE: $ENV{MEL_FILTER_H_FILE}")
+    list(APPEND BUILD_FLAGS "-DMEL_FILTER_H_FILE=\"$ENV{MEL_FILTER_H_FILE}\"")
+endif()
+
+if(DEFINED ENV{LN_TEST_VECTOR_LENGTH})
+    message(STATUS "Ln vect length: $ENV{LN_TEST_VECTOR_LENGTH}")
+    list(APPEND BUILD_FLAGS "-DLN_TEST_VECTOR_LENGTH=\"$ENV{LN_TEST_VECTOR_LENGTH}\"")
+endif()
 
 set(APP_SRCS
         src/main.c
         ../../lib_audio_features/src/mel_filter.c
+        ../../lib_audio_features/src/ln.c
     )
 
 set(APP_INCLUDES
@@ -60,6 +65,7 @@ set(VTB_SRCS
     )
 
 set(DSP_SRCS
+    ${DSP_PATH}/src/dsp_math.c
     )
 
 
