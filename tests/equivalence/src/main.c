@@ -77,20 +77,19 @@ int main(int argc, char *argv[]){
         bfp_s32_init(&ln_in, input_array, exp_in, ln_vect_len, calc_hr);
 
         int32_t output_array[ln_vect_len];
-        exponent_t exp_out = 0;
         bfp_s32_t ln_out;
-        bfp_s32_init(&ln_out, output_array, exp_out, ln_vect_len, calc_hr);
+        bfp_s32_init(&ln_out, output_array, 0, ln_vect_len, calc_hr);
 
 
         uint32_t t0 = get_reference_time();
-        // bfp_ln_s32(&ln_out, &ln_in, ln_vect_len);
-        memcpy(&output_array, &input_array, sizeof(output_array));
-        memcpy(&exp_out, &exp_in, sizeof(exp_out));
+        bfp_ln_s32(&ln_out, &ln_in, ln_vect_len);
+        // memcpy(&output_array, &input_array, sizeof(output_array));
+        // memcpy(&exp_out, &exp_in, sizeof(exp_out));
         uint32_t t1 = get_reference_time();
         printf("ln processing time for vector len %i: %u\n",
             ln_vect_len,
             (int)(t1 - t0));
-        xassert(1 == fwrite((void*)&exp_out, sizeof(exponent_t), 1, outfile));
+        xassert(1 == fwrite((void*)&ln_out.exp, sizeof(exponent_t), 1, outfile));
         xassert(ln_vect_len == fwrite((void*)output_array, sizeof(output_array[0]), ln_vect_len, outfile));
     }
     #endif
