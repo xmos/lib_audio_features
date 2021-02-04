@@ -88,7 +88,7 @@ pipeline {
                   withVenv() {
                     toolsEnv(TOOLS_PATH) {
                       withEnv(["DISPLAY=none", "XMOS_AIOT_SDK_PATH=../../aiot_sdk"]) {
-                        sh 'python -m pytest test_mels.py --junitxml=pytest_result.xml -s'
+                        sh 'python -m pytest --junitxml=pytest_result.xml -s'
                         junit 'pytest_result.xml'
                       }
                     }
