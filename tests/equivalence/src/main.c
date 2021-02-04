@@ -32,7 +32,6 @@ int main(int argc, char *argv[]){
     xassert(outfile);
 
     #ifdef MEL_FILTER_H_FILE
-    printf("MEL test\n");
     for(int i = 0; i < iterations; i++){
         int32_t input_bins[AUDIO_FEATURES_NUM_BINS];
         int32_t output_mels[AUDIO_FEATURES_NUM_MELS];
@@ -86,7 +85,7 @@ int main(int argc, char *argv[]){
         // memcpy(&output_array, &input_array, sizeof(output_array));
         // memcpy(&exp_out, &exp_in, sizeof(exp_out));
         uint32_t t1 = get_reference_time();
-        printf("ln processing time for vector len %i: %u\n",
+        printf("\nln processing time for vector len %i: %u\n",
             ln_vect_len,
             (int)(t1 - t0));
         xassert(1 == fwrite((void*)&ln_out.exp, sizeof(exponent_t), 1, outfile));
