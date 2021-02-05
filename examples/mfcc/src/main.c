@@ -89,7 +89,7 @@ int main(void){
 
     mfcc(mfccs, samps, &mfcc_config);
 
-
+    print_int_array(mfccs, MFCC_SIZE);
 
     printf("Fin\n");
 }
