@@ -51,11 +51,12 @@ def do_test_run(fft_size, nmels, type):
 
     with open(Path("src") / (name + ".h"), "wt") as hfile:
         hfile.write(c_text)
+    
     os.environ['MEL_FILTER_H_FILE'] = name + ".h"
-
     result = subprocess.run("cmake .".split(), stdout=subprocess.PIPE, text=True)
     result = subprocess.run("make -j".split(), stdout=subprocess.PIPE, text=True)
-
+    del os.environ['MEL_FILTER_H_FILE']
+    
     int_test = (test_bins * np.iinfo(np.int32).max).astype(np.int32)
     int_test.tofile("input.bin")
     cmd = "xsim --args app_equivalence input.bin output.bin 1"

@@ -22,9 +22,9 @@ def s32bfp_to_float(bfp):
 def do_test_run(ln_vect_len, max_in=np.finfo(np.float32).max, rtol=0.000001):
   
     os.environ['LN_TEST_VECTOR_LENGTH'] = str(ln_vect_len)
-
     result = subprocess.run("cmake .".split(), stdout=subprocess.PIPE, text=True)
     result = subprocess.run("make -j".split(), stdout=subprocess.PIPE, text=True)
+    del os.environ['LN_TEST_VECTOR_LENGTH']
 
     test_vect = np.random.uniform(low=0, high=max_in, size=(ln_vect_len)).astype(np.float32)
     
