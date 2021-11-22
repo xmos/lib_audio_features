@@ -23,7 +23,7 @@ pipeline {
       steps {
         checkout scm
         sh "git submodule update --jobs 8 --init --recursive"
-        sh "git clone -b v1.3.1 git@github0.xmos.com:xmos-int/xtagctl.git"
+        sh "git clone -b v1.5.0 git@github0.xmos.com:xmos-int/xtagctl.git"
         //Note shallow clone of AIOT to speed up regression
 	    sh "git clone --depth 1 --jobs 8 --recurse-submodules git@github.com:xmos/aiot_sdk.git"
         sh "cd aiot_sdk/modules/lib_xs3_math && git checkout develop && cd -"
