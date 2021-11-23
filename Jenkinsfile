@@ -1,8 +1,8 @@
-@Library('xmos_jenkins_shared_library@v0.16.0') _
+@Library('xmos_jenkins_shared_library@v0.16.4') _
 
 pipeline {
   agent {
-    label "xcore.ai-explorer"
+    label "xcore.ai"
   }
   parameters {
     string(
