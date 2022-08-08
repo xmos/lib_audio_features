@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.16.4') _
+@Library('xmos_jenkins_shared_library@v0.19.0') _
 
 pipeline {
   agent {
@@ -7,7 +7,7 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.0.4',
+      defaultValue: '15.1.4',
       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
     )
   }
@@ -33,8 +33,7 @@ pipeline {
     }
     stage('Install Dependencies') {
       steps {
-        sh '/XMOS/get_tools.py 15.0.4'
-        toolsEnv(TOOLS_PATH) {  // load xmos tools
+        withTools(params.TOOLS_VERSION) {  // load xmos tools
           installDependencies()
         }
       }
@@ -49,7 +48,7 @@ pipeline {
     }
     stage('Build') {
       steps {
-        toolsEnv(TOOLS_PATH) {  // load xmos tools
+        withTools(params.TOOLS_VERSION) {
           withVenv() {
             sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dit --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
             // sh 'python aiot_sdk/modules/lib_xs3_math/lib_xs3_math/script/gen_fft_table.py --dif --max_fft_log2 10 --out_dir aiot_sdk/modules/lib_xs3_math/lib_xs3_math/src/vect'
@@ -71,7 +70,7 @@ pipeline {
               steps {
                 dir('tests') {
                   withVenv() {
-                    toolsEnv(TOOLS_PATH) {
+                    withTools(params.TOOLS_VERSION) {
                       sh 'echo "hello world"'
                     }
                   }
@@ -86,7 +85,7 @@ pipeline {
               steps {
                 dir('tests/equivalence') {
                   withVenv() {
-                    toolsEnv(TOOLS_PATH) {
+                    withTools(params.TOOLS_VERSION) {
                       withEnv(["DISPLAY=none", "XMOS_AIOT_SDK_PATH=../../aiot_sdk"]) {
                         sh 'python -m pytest --junitxml=pytest_result.xml -s'
                         junit 'pytest_result.xml'
