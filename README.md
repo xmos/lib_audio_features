@@ -1,5 +1,8 @@
 # lib_audio_features
-Optimised functions for generating commonly used features from audio streams
+DEPRECATED: Optimised functions for generating commonly used features from audio streams
+___
+This library is no longer supported.
+___
 
 A page containing an overview of work done can be found here:
 
